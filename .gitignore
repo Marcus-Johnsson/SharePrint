@@ -1,0 +1,39 @@
+# ---- .NET ----
+bin/
+obj/
+*.user
+*.suo
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+*.nupkg
+project.lock.json
+.vs/
+
+# ---- EF / SQLite (local dev db) ----
+*.db
+*.db-shm
+*.db-wal
+
+# ---- Node / SvelteKit (client) ----
+node_modules/
+.svelte-kit/
+build/
+.vite/
+*.log
+npm-debug.log*
+
+# ---- Env ----
+.env
+.env.*
+!.env.example
+
+# ---- IDE ----
+.idea/
+*.sln.iml
+.vscode/*
+!.vscode/extensions.json
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
