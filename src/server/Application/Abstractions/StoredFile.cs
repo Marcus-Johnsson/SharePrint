@@ -1,6 +1,3 @@
 namespace SharePrint.Application.Abstractions;
 
-public class StoredFile
-{
-    
-}
+public sealed record StoredFile(Stream Content,string ContentType, string OriginalFileName);
