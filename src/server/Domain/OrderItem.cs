@@ -2,7 +2,7 @@ namespace SharePrint.Domain;
 
 public enum OrderItemType { Download }
 
-public class OrderItems
+public class OrderItem
 {
     public Guid Id { get; set; } =  Guid.NewGuid();
     public Guid OrderId { get; set; }
