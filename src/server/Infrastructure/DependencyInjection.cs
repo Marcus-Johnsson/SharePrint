@@ -15,7 +15,8 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration cfg)
     {
         services.AddDbContext<SharePrintDbContext>(o =>
-            o.UseSqlite(cfg.GetConnectionString("Default")));
+            o.UseNpgsql(cfg.GetConnectionString("DefaultConnection"),
+                npg => npg.MigrationsAssembly(typeof(SharePrintDbContext).Assembly.GetName().Name)));
         
         services.AddIdentityCore<User>(o =>
             {

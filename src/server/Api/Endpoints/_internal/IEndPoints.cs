@@ -1,4 +1,4 @@
-namespace SharePrint.Api.Endpoints._IEndpoints;
+namespace SharePrint.Api.Endpoints._internal;
 
 public interface IEndpoint
 {
