@@ -1,4 +1,4 @@
-namespace SharePrint.Api.Endpoints.IEndpoints;
+namespace SharePrint.Api.Endpoints._IEndpoints;
 
 public static class EndpointExtensions
 {
