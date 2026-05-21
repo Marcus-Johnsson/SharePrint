@@ -7,6 +7,8 @@ namespace SharePrint.Api.IntegrationTests;
 /// Helpers for authenticating an HttpClient against the cookie-based Identity auth.
 /// The API uses IdentityConstants.ApplicationScheme (cookie) — not JWT — so the
 /// "token" is really an auth cookie attached to the HttpClient's cookie container.
+///
+/// The really neat thing is that it does not work :) wasted time goes swooosh
 /// </summary>
 public static class CreateFakeAuth
 {
