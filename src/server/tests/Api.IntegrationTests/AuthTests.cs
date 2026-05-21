@@ -10,7 +10,7 @@ public class AuthTests : IClassFixture<WebApplicationFactory<Program>>
     public AuthTests(WebApplicationFactory<Program> factory) => _factory = factory;
 
     [Fact]
-    public async Task Register_then_me_returns_user_with_customer_role()
+    public async Task Register_then_me_returns_user_with_customer_role() //fails since it need auth
     {
         var client = _factory.CreateClient();
         var registerResponse = await client.PostAsJsonAsync("/api/auth/register",

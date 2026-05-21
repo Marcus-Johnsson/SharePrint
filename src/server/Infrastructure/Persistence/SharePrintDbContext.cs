@@ -11,6 +11,8 @@ public class SharePrintDbContext : IdentityDbContext<User>
         
     }
     public DbSet<Listing> Listings => Set<Listing>();
+    public DbSet<ListingImage> ListingImages => Set<ListingImage>();
+
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<DownloadGrant> DownloadGrants => Set<DownloadGrant>();
@@ -23,5 +25,13 @@ public class SharePrintDbContext : IdentityDbContext<User>
         b.Entity<Listing>().Property(l => l.Price).HasPrecision(18, 2);
         b.Entity<Order>().Property(o => o.TotalPrice).HasPrecision(18, 2);
         b.Entity<OrderItem>().Property(o => o.UnitPrice).HasPrecision(18, 2);
+
+        b.Entity<ListingImage>()
+            .HasOne<Listing>()
+            .WithMany(l => l.GalleryImages)
+            .HasForeignKey(i => i.ListingId)
+            .OnDelete(DeleteBehavior.Cascade);
+        b.Entity<ListingImage>()
+            .HasIndex(i => new { i.ListingId, i.Order });
     }
 }

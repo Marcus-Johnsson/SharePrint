@@ -41,6 +41,12 @@ public class Listing
 
     [Range(1, 524_288_000)]
     public long SizeBytes { get; set; }
+    
+    [Required]
+    [StringLength(500)]
+    public string MarketPictureKey { get; set; } = "";
+
+    public ICollection<ListingImage> GalleryImages { get; set; } = new List<ListingImage>();
 
     [EnumDataType(typeof(ListingStatus))]
     public ListingStatus Status { get; set; } = ListingStatus.Active;
