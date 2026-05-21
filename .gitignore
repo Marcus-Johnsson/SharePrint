@@ -9,7 +9,7 @@ artifacts/
 *.nupkg
 project.lock.json
 .vs/
-*appsettings
+appsettings.*.json
 # ---- EF / SQLite (local dev db) ----
 *.db
 *.db-shm
