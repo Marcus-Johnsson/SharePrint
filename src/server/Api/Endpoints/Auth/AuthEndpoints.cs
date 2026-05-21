@@ -16,8 +16,7 @@ public class AuthEndpoints : IEndpoint
             {
                 var newUser = new User
                 {
-                    UserName = RegisterRequest.Username, Email = RegisterRequest.Email,
-                    PasswordHash = RegisterRequest.Password
+                    UserName = RegisterRequest.Username, Email = RegisterRequest.Email
                 };
                 var result = await users.CreateAsync(newUser, RegisterRequest.Password);
                 if (!result.Succeeded)
