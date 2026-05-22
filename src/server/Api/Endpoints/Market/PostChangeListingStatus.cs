@@ -6,7 +6,7 @@ using SharePrint.Infrastructure.Persistence;
 
 namespace SharePrint.Api.Endpoints.Market;
 
-public class PostUnlistListing : IEndpoint
+public class PostChangeListingStatus : IEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
@@ -26,7 +26,11 @@ public class PostUnlistListing : IEndpoint
         if (listing == null) return Results.NotFound();
         var user = await users.GetUserAsync(context.User);
         if (user.Id != listing.SellerId) return Results.Forbid();
-        listing.Status = ListingStatus.Unlisted;
+
+        listing.Status = listing.Status == ListingStatus.Active
+            ? ListingStatus.Unlisted
+            : ListingStatus.Active;
+       
         await db.SaveChangesAsync();
         return Results.Ok();
     }

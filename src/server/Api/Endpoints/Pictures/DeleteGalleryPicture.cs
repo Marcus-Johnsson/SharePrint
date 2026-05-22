@@ -47,7 +47,9 @@ public class DeleteGalleryPicture : IEndpoint
             await pictureStorage.DeleteAsync(key);
         }
         catch
-        {}
+        {
+            //if deleting did not work then logg it all we can do and manually delete?
+        }
         return Results.Ok(ToDetail(list, user.UserName ?? "unknown"));
     }
     private static ListingContracts.ListingDetail ToDetail(Listing l, string sellerUsername) =>
