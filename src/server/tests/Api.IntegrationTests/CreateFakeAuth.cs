@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace SharePrint.Api.IntegrationTests;
 
-// The really neat thing is that it does not work :) wasted time goes swooosh
 public static class CreateFakeAuth
 {
     public record TestUser(string Email, string Password, string Username);

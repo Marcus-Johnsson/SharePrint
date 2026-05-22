@@ -1,10 +1,10 @@
-namespace SharePrint.Application.Abstractions;
+namespace SharePrint.Application.Listings;
 
-public class PictureValidation
+public static class PictureValidator
 {
     public const long DefaultMaxBytes = 5 * 1024 * 1024; // 5 MB
 
-    public static bool IsAlloedImage(ReadOnlySpan<byte> header, string contentType, long maxBytes, out string error)
+    public static bool IsAllowedImage(ReadOnlySpan<byte> header, string contentType, long maxBytes, out string error)
     {
         if (header.Length > maxBytes)
         {
