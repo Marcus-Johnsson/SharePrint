@@ -13,7 +13,7 @@ public class ApplySellerRole : IEndpoint
             var user = await users.GetUserAsync(context.User);
             if (user is null) return Results.Unauthorized();
             if(await users.IsInRoleAsync(user, Roles.Seller))
-                return Results.Problem("Already a seller");
+                return Results.Problem("Har redan behörigheten för att skapa produkter.");
             if (!await users.IsInRoleAsync(user, Roles.Seller))
                 await users.AddToRoleAsync(user, Roles.Seller);
             return Results.Ok();
