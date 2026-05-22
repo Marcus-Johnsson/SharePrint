@@ -3,13 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace SharePrint.Api.IntegrationTests;
 
-/// <summary>
-/// Helpers for authenticating an HttpClient against the cookie-based Identity auth.
-/// The API uses IdentityConstants.ApplicationScheme (cookie) — not JWT — so the
-/// "token" is really an auth cookie attached to the HttpClient's cookie container.
-///
-/// The really neat thing is that it does not work :) wasted time goes swooosh
-/// </summary>
+// The really neat thing is that it does not work :) wasted time goes swooosh
 public static class CreateFakeAuth
 {
     public record TestUser(string Email, string Password, string Username);

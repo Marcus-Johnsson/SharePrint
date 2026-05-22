@@ -22,7 +22,7 @@ public class ListingImageEntityTests : IClassFixture<WebApplicationFactory<Progr
             SellerId = $"{Guid.NewGuid():N}",
             Title = "Test",
             Description = "d",
-            Price = 1m,
+            Price = 1,
             Currency = "SEK",
             StorageKey = "filekey",
             OriginalFileName = "a.bin",

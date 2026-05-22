@@ -1,6 +1,6 @@
 namespace SharePrint.Application.Abstractions;
 
-public class DescriptionPreview
+public static class DescriptionPreview
 {
     
 }

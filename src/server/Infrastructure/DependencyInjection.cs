@@ -17,7 +17,7 @@ public static class DependencyInjection
         services.AddDbContext<SharePrintDbContext>(o =>
             o.UseNpgsql(cfg.GetConnectionString("DefaultConnection"),
                 npg => npg.MigrationsAssembly(typeof(SharePrintDbContext).Assembly.GetName().Name)));
-        
+
         services.AddIdentityCore<User>(o =>
             {
                 o.User.RequireUniqueEmail = true;
@@ -27,19 +27,38 @@ public static class DependencyInjection
             .AddEntityFrameworkStores<SharePrintDbContext>()
             .AddSignInManager();
 
-        var storage = cfg["Storage:Provider"];
-        if (storage == "LocalDisk")
-            services.AddSingleton<IFileStorage>(_ => new
-                LocalDiskStorage(cfg["Storage:LocalDisk:RootPath"] ?? "./storage"));
-        else
+        AddStorage(services, cfg);
+        AddPayments(services, cfg);
+        return services;
+    }
+
+    private static void AddStorage(IServiceCollection services, IConfiguration cfg)
+    {
+        var provider = (cfg["Storage:Provider"] ?? "Local").ToLowerInvariant();
+        switch (provider)
         {
-            throw new InvalidOperationException($"Error locating storage provider: {storage}");
+            case "cloud":
+                services.AddSingleton<IFileStorage, CloudFileStorage>();
+                services.AddSingleton<IPictureStorage, CloudPictureStorage>();
+                break;
+            case "local":
+            case "localdisk":
+                services.AddSingleton<IFileStorage>(_ =>
+                    new LocalDiskStorage(cfg["Storage:FilesPath"] ?? "./data/files"));
+                services.AddSingleton<IPictureStorage>(_ =>
+                    new LocalDiskPictureStorage(cfg["Storage:PicturesPath"] ?? "./data/pictures"));
+                break;
+            default:
+                throw new InvalidOperationException($"Unknown Storage:Provider '{provider}'. Expected 'Local' or 'S3'.");
         }
-        
+    }
+
+    private static void AddPayments(IServiceCollection services, IConfiguration cfg)
+    {
         var pay = cfg["Payment:Provider"];
         if (pay == "Fake")
             services.AddSingleton<IPaymentProcessor, FakePaymentProcessor>();
-        else throw new InvalidOperationException($"Error locating payment provider: {pay}");
-        return services;
+        else
+            throw new InvalidOperationException($"Unknown Payment:Provider '{pay}'.");
     }
 }
