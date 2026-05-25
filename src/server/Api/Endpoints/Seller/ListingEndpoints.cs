@@ -12,7 +12,7 @@ public class ListingEndpoints : IEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/seller/listings", Handler)
+        app.MapPost("/api/listings", Handler)
             .RequireAuthorization()
             .DisableAntiforgery()
             .WithName("CreateListing");

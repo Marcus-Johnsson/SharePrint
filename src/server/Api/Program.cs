@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 using SharePrint.Api.Endpoints._internal;
 using SharePrint.Domain;
 using SharePrint.Infrastructure;
@@ -11,6 +12,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // builder.Services.AddDbContext<SharePrintDbContext>(options =>
 //    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddOpenApi();
 builder.Services.AddAuthorization();
 builder.Services.AddValidation();
 builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
@@ -42,6 +44,8 @@ using (var scope = app.Services.CreateScope())
         if (!await roleManager.RoleExistsAsync(r)) await roleManager.CreateAsync(new IdentityRole(r));
 }
 
+app.MapOpenApi();
+app.MapScalarApiReference();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

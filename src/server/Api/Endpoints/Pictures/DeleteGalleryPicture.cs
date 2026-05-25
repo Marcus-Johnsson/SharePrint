@@ -13,15 +13,15 @@ public class DeleteGalleryPicture : IEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapDelete("/api/pictures/{id}{imageId}", Handler)
+        app.MapDelete("/api/listings/{id}/gallery/{imageId}", Handler)
             .RequireAuthorization()
             .DisableAntiforgery()
-            .WithName("CreateListing");
+            .WithName("DeleteGalleryPicture");
     }
 
     private static async Task<IResult> Handler(
-        [FromHeader] Guid id,
-        [FromHeader] Guid imageId,
+        [FromRoute] Guid id,
+        [FromRoute] Guid imageId,
         HttpContext context,
         IPictureStorage pictureStorage,
         UserManager<User> users,

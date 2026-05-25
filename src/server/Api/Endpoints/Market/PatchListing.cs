@@ -11,14 +11,14 @@ public class PatchListing : IEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPatch("/api/seller/{id}", Handler)
+        app.MapPatch("/api/listings/{id}", Handler)
             .RequireAuthorization()
             .DisableAntiforgery()
             .WithName("PatchListing");
     }
 
     private async static Task<IResult> Handler(
-        [FromHeader] Guid id,
+        [FromRoute] Guid id,
         ListingContracts.UpdateListingRequest request,
         HttpContext context,
         UserManager<User> users,

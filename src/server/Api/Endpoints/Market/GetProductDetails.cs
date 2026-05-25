@@ -12,13 +12,13 @@ public class GetProductDetails : IEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/market/{id}", Handler)
+        app.MapGet("/api/listings/{id}", Handler)
             .RequireAuthorization()
-            .WithName("CreateListing");
+            .WithName("GetProductDetails");
     }
 
     private static async Task<IResult> Handler(
-            [FromHeader] Guid id,
+            [FromRoute] Guid id,
             SharePrintDbContext db,
             UserManager<User> user)
     {

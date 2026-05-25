@@ -12,10 +12,8 @@ public class ListingContract : IEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/seller/catalog", Handler)
-            .RequireAuthorization()
-            .DisableAntiforgery()
-            .WithName("CreateListing");
+        app.MapGet("/api/listings", Handler)
+            .WithName("GetCatalog");
     }
     private static async Task<IResult> Handler(
         SharePrintDbContext db,
@@ -28,7 +26,7 @@ public class ListingContract : IEndpoint
 
         var items = await db.Listings.Where(l => l.Status == ListingStatus.Active)
             .OrderByDescending(d => d.CreatedAt)
-            .Skip(page * pageSize)
+            .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
 

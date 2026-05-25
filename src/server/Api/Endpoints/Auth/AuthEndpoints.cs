@@ -42,7 +42,7 @@ public class AuthEndpoints : IEndpoint
                 return Results.Ok();
             }).RequireAuthorization();
 
-        action.MapPost("/me",
+        action.MapGet("/me",
             async (UserManager<User> users, HttpContext context) =>
             {
                 var user = await users.GetUserAsync(context.User);

@@ -10,7 +10,7 @@ public class PostChangeListingStatus : IEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/seller/unlist/{id}", Handler)
+        app.MapPost("/api/listings/{id}/status", Handler)
             .RequireAuthorization()
             .DisableAntiforgery()
             .WithName("UnlistListing");
