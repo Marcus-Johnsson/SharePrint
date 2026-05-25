@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SharePrint.Api.Contracts;
 using SharePrint.Api.Endpoints._internal;
+using SharePrint.Api.Endpoints.Seller;
 using SharePrint.Application.Abstractions;
 using SharePrint.Domain;
 using SharePrint.Infrastructure.Persistence;
@@ -16,7 +17,11 @@ public class DeleteGalleryPicture : IEndpoint
         app.MapDelete("/api/listings/{id}/gallery/{imageId}", Handler)
             .RequireAuthorization()
             .DisableAntiforgery()
-            .WithName("DeleteGalleryPicture");
+            .WithName("DeleteGalleryPicture")
+            .Produces<ListingContracts.ListingDetail>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound);
     }
 
     private static async Task<IResult> Handler(
@@ -25,47 +30,28 @@ public class DeleteGalleryPicture : IEndpoint
         HttpContext context,
         IPictureStorage pictureStorage,
         UserManager<User> users,
-        SharePrintDbContext db
-    )
+        SharePrintDbContext db)
     {
-        var list = await db.Listings.Include(
-            x => x.GalleryImages).FirstOrDefaultAsync(p => p.Id == id);
-        if (list is null) return Results.NotFound();
+        var listing = await db.Listings
+            .Include(l => l.GalleryImages)
+            .FirstOrDefaultAsync(l => l.Id == id);
+        if (listing is null) return TypedResults.NotFound();
 
         var user = (await users.GetUserAsync(context.User))!;
-        if (list.SellerId != user.Id) return Results.Forbid();
-        
-        var img = list.GalleryImages.FirstOrDefault(i => i.Id == imageId);
-        if (img is null) return Results.NotFound();
-        if (list.GalleryImages.Count <= 1) return Results.Problem("Minst en bild behövs finnas", statusCode: 400);
+        if (listing.SellerId != user.Id) return TypedResults.Forbid();
+
+        var img = listing.GalleryImages.FirstOrDefault(i => i.Id == imageId);
+        if (img is null) return TypedResults.NotFound();
+        if (listing.GalleryImages.Count <= 1)
+            return TypedResults.Problem("Minst en bild behövs finnas", statusCode: 400);
 
         var key = img.StorageKey;
-        list.GalleryImages.Remove(img);
+        listing.GalleryImages.Remove(img);
         await db.SaveChangesAsync();
-        try
-        {
-            await pictureStorage.DeleteAsync(key);
-        }
-        catch
-        {
-            //if deleting did not work then logg it all we can do and manually delete?
-        }
-        return Results.Ok(ToDetail(list, user.UserName ?? "unknown"));
-    }
-    private static ListingContracts.ListingDetail ToDetail(Listing l, string sellerUsername) =>
-        new(
-            l.Id,
-            l.Title,
-            l.Description,
-            l.Price,
-            $"/api/pictures/{l.MarketPictureKey}",
-            l.GalleryImages
-                .OrderBy(g => g.Order)
-                .Select(g => new ListingContracts.DescriptionPicture(g.Id, $"/api/pictures/{g.StorageKey}"))
-                .ToList(),
-            sellerUsername,
-            l.Status.ToString(),
-            l.DownloadAble,
-            l.PrintAble);
-}
 
+        try { await pictureStorage.DeleteAsync(key); } catch { /* log */ }
+
+        return TypedResults.Ok(
+            ListingEndpoints.ToDetail(listing, user.UserName ?? "unknown"));
+    }
+}

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SharePrint.Api.Contracts;
 using SharePrint.Api.Endpoints._internal;
+using SharePrint.Api.Endpoints.Seller;
 using SharePrint.Domain;
 using SharePrint.Infrastructure.Persistence;
 
@@ -14,34 +15,24 @@ public class GetProductDetails : IEndpoint
     {
         app.MapGet("/api/listings/{id}", Handler)
             .RequireAuthorization()
-            .WithName("GetProductDetails");
+            .WithName("GetProductDetails")
+            .Produces<ListingContracts.ListingDetail>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound);
     }
 
     private static async Task<IResult> Handler(
-            [FromRoute] Guid id,
-            SharePrintDbContext db,
-            UserManager<User> user)
+        [FromRoute] Guid id,
+        SharePrintDbContext db,
+        UserManager<User> users)
     {
-        var info = await db.Listings.Include(p => p.GalleryImages)
-            .FirstOrDefaultAsync(i => i.Id == id);
-        if (info is null || info.Status != ListingStatus.Active) return Results.NotFound();
-        var seller = await user.FindByIdAsync(info.SellerId);
-        return Results.Ok(ToDetail(info, seller?.UserName ?? "unknown"));
-    }
-    private static ListingContracts.ListingDetail ToDetail(Listing l, string sellerUsername) =>
-        new(
-            l.Id,
-            l.Title,
-            l.Description,
-            l.Price,
-            $"/api/pictures/{l.MarketPictureKey}",
-            l.GalleryImages
-                .OrderBy(g => g.Order)
-                .Select(g => new ListingContracts.DescriptionPicture(g.Id, $"/api/pictures/{g.StorageKey}"))
-                .ToList(),
-            sellerUsername,
-            l.Status.ToString(),
-            l.DownloadAble,
-            l.PrintAble);
-}
+        var listing = await db.Listings
+            .Include(l => l.GalleryImages)
+            .FirstOrDefaultAsync(l => l.Id == id);
 
+        if (listing is null || listing.Status != ListingStatus.Active)
+            return TypedResults.NotFound();
+
+        var seller = await users.FindByIdAsync(listing.SellerId);
+        return TypedResults.Ok(ListingEndpoints.ToDetail(listing, seller?.UserName ?? "unknown"));
+    }
+}

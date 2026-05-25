@@ -13,25 +13,34 @@ public class PostChangeListingStatus : IEndpoint
         app.MapPost("/api/listings/{id}/status", Handler)
             .RequireAuthorization()
             .DisableAntiforgery()
-            .WithName("UnlistListing");
+            .WithName("ChangeListingStatus")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound);
     }
+
+    private record Request(string Status);
 
     private static async Task<IResult> Handler(
         [FromRoute] Guid id,
+        Request req,
         HttpContext context,
         UserManager<User> users,
         SharePrintDbContext db)
     {
-        var listing = await db.Listings.FindAsync(id);
-        if (listing == null) return Results.NotFound();
-        var user = await users.GetUserAsync(context.User);
-        if (user.Id != listing.SellerId) return Results.Forbid();
+        if (!Enum.TryParse<ListingStatus>(req.Status, ignoreCase: true, out var newStatus))
+            return TypedResults.Problem($"Invalid status. Valid values: {string.Join(", ", Enum.GetNames<ListingStatus>())}",
+                statusCode: 400);
 
-        listing.Status = listing.Status == ListingStatus.Active
-            ? ListingStatus.Unlisted
-            : ListingStatus.Active;
-       
+        var listing = await db.Listings.FindAsync(id);
+        if (listing is null) return TypedResults.NotFound();
+
+        var user = (await users.GetUserAsync(context.User))!;
+        if (listing.SellerId != user.Id) return TypedResults.Forbid();
+
+        listing.Status = newStatus;
         await db.SaveChangesAsync();
-        return Results.Ok();
+        return TypedResults.Ok();
     }
 }

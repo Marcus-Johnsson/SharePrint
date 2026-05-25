@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using SharePrint.Api.Contracts;
 using SharePrint.Api.Endpoints._internal;
 using SharePrint.Application.Abstractions;
@@ -15,71 +16,64 @@ public class ListingEndpoints : IEndpoint
         app.MapPost("/api/listings", Handler)
             .RequireAuthorization()
             .DisableAntiforgery()
-            .WithName("CreateListing");
+            .WithName("CreateListing")
+            .Produces<ListingContracts.ListingDetail>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized);
+    }
+
+    private class Request
+    {
+        public string Title        { get; set; } = "";
+        public string Description  { get; set; } = "";
+        public decimal Price       { get; set; }
+        public bool DownloadAble   { get; set; }
+        public bool PrintAble      { get; set; }
+        public IFormFile?  File           { get; set; }
+        public IFormFile?  Thumbnail      { get; set; }
+        public IFormFileCollection? GalleryImages { get; set; }
     }
 
     private static async Task<IResult> Handler(
+        [FromForm] Request req,
         HttpContext context,
-        HttpRequest request,
         IFileStorage fileStorage,
         IPictureStorage pictureStorage,
         UserManager<User> users,
         SharePrintDbContext db)
     {
-        if (!request.HasFormContentType)
-            return Results.Problem("Fel form data");
-        var form = await request.ReadFormAsync();
+        if (!req.DownloadAble && !req.PrintAble)
+            return TypedResults.Problem("Minst ett val av köp val", statusCode: 400);
+        if (string.IsNullOrWhiteSpace(req.Title))
+            return TypedResults.Problem("Title required.", statusCode: 400);
+        if (req.Price <= 0)
+            return TypedResults.Problem("Price must be > 0.", statusCode: 400);
+        if (req.File is null || req.File.Length == 0)
+            return TypedResults.Problem("Product file required.", statusCode: 400);
+        if (req.Thumbnail is null || req.Thumbnail.Length == 0)
+            return TypedResults.Problem("Thumbnail required.", statusCode: 400);
 
-        var downloadAble = bool.TryParse(form["downloadAble"], out var dl) && dl;
-        var printAble    = bool.TryParse(form["printAble"],    out var pr) && pr;
-        if (!downloadAble && !printAble)
-            return Results.Problem("Minst ett val av köp val", statusCode: 400);
-        
-        var title = form["title"].ToString();
-        if (string.IsNullOrWhiteSpace(title))
-            return Results.Problem("Title required.", statusCode: 400);
-
-        if (!decimal.TryParse(form["price"], System.Globalization.NumberStyles.Number,
-                System.Globalization.CultureInfo.InvariantCulture, out var price) || price <= 0)
-            return Results.Problem("Price must be > 0.", statusCode: 400);
-
-        var description = form["description"].ToString() ?? "";
-
-        var productFile = form.Files["file"];
-        if (productFile is null || productFile.Length == 0)
-            return Results.Problem("Product file required.", statusCode: 400);
-
-        var thumbnail = form.Files["thumbnail"];
-        if (thumbnail is null || thumbnail.Length == 0)
-            return Results.Problem("Thumbnail required.", statusCode: 400);
-
-        var gallery = form.Files.GetFiles("galleryImages");
+        var gallery = req.GalleryImages?.GetFiles("galleryImages") ?? [];
         if (gallery.Count is < 1 or > 5)
-            return Results.Problem("Gallery must contain 1 to 5 images.", statusCode: 400);
-
-        // Validate thumbnail.
-        if (!await ValidateImageAsync(thumbnail))
-            return Results.Problem("Thumbnail invalid (mime/size/magic).", statusCode: 400);
-
-        // Validate each gallery image.
+            return TypedResults.Problem("Gallery must contain 1 to 5 images.", statusCode: 400);
+        if (!await ValidateImageAsync(req.Thumbnail))
+            return TypedResults.Problem("Thumbnail invalid (mime/size/magic).", statusCode: 400);
         foreach (var img in gallery)
             if (!await ValidateImageAsync(img))
-                return Results.Problem("Gallery image invalid (mime/size/magic).", statusCode: 400);
-        
-        var user = await users.GetUserAsync(context.User)!;
+                return TypedResults.Problem("Gallery image invalid (mime/size/magic).", statusCode: 400);
 
-        var savedFileKey = "";
-        var savedThumbKey = "";
+        var user = (await users.GetUserAsync(context.User))!;
+
+        var savedFileKey     = "";
+        var savedThumbKey    = "";
         var savedGalleryKeys = new List<string>();
 
         try
         {
-            await using (var s = productFile.OpenReadStream())
-                savedFileKey = await fileStorage.SaveAsync(s, productFile.ContentType, productFile.FileName);
-
-            await using (var s = thumbnail.OpenReadStream())
-                savedThumbKey = await pictureStorage.SaveAsync(s, thumbnail.ContentType);
-
+            await using (var s = req.File.OpenReadStream())
+                savedFileKey = await fileStorage.SaveAsync(s, req.File.ContentType, req.File.FileName);
+            await using (var s = req.Thumbnail.OpenReadStream())
+                savedThumbKey = await pictureStorage.SaveAsync(s, req.Thumbnail.ContentType);
             foreach (var img in gallery)
             {
                 await using var s = img.OpenReadStream();
@@ -88,62 +82,54 @@ public class ListingEndpoints : IEndpoint
 
             var listing = new Listing
             {
-                SellerId = user.Id,
-                Title = title,
-                Description = description,
-                Price = price,
-                Currency = "SEK",
-                StorageKey = savedFileKey,
-                OriginalFileName = productFile.FileName,
-                ContentType = productFile.ContentType,
-                SizeBytes = productFile.Length,
+                SellerId         = user.Id,
+                Title            = req.Title,
+                Description      = req.Description,
+                Price            = req.Price,
+                Currency         = "SEK",
+                StorageKey       = savedFileKey,
+                OriginalFileName  = req.File.FileName,
+                ContentType      = req.File.ContentType,
+                SizeBytes        = req.File.Length,
                 MarketPictureKey = savedThumbKey,
-                Status = ListingStatus.Active,
-                DownloadAble = downloadAble,
-                PrintAble = printAble,
-                GalleryImages = savedGalleryKeys.Select((k, i) => new ListingImage
-                {
-                    StorageKey = k, Order = i
-                }).ToList()
+                Status           = ListingStatus.Active,
+                DownloadAble     = req.DownloadAble,
+                PrintAble        = req.PrintAble,
+                GalleryImages    = savedGalleryKeys
+                    .Select((k, i) => new ListingImage { StorageKey = k, Order = i })
+                    .ToList()
             };
-                
-                db.Listings.Add(listing);
-                await db.SaveChangesAsync();
-                
-                return Results.Ok(ToDetail(listing, user.UserName ?? "Unknown"));
+
+            db.Listings.Add(listing);
+            await db.SaveChangesAsync();
+
+            return TypedResults.Ok(ToDetail(listing, user.UserName ?? "Unknown"));
         }
         catch
         {
-            // Best-effort cleanup.
             foreach (var k in savedGalleryKeys)
-                try { await pictureStorage.DeleteAsync(k); } catch { /* log later */ }
+                try { await pictureStorage.DeleteAsync(k); } catch { }
             if (savedThumbKey != "") try { await pictureStorage.DeleteAsync(savedThumbKey); } catch { }
-            if (savedFileKey != "") try { await fileStorage.DeleteAsync(savedFileKey); } catch { }
+            if (savedFileKey  != "") try { await fileStorage.DeleteAsync(savedFileKey); }    catch { }
             throw;
         }
     }
+
     private static async Task<bool> ValidateImageAsync(IFormFile file)
     {
         if (file.Length > PictureValidator.DefaultMaxBytes) return false;
         var buffer = new byte[Math.Min(file.Length, 16)];
         await using var s = file.OpenReadStream();
         var read = await s.ReadAsync(buffer);
-        return PictureValidator.IsAllowedImage(buffer.AsSpan(0, read), file.ContentType, PictureValidator.DefaultMaxBytes, out _);
+        return PictureValidator.IsAllowedImage(buffer.AsSpan(0, read), file.ContentType,
+            PictureValidator.DefaultMaxBytes, out _);
     }
 
-    private static ListingContracts.ListingDetail ToDetail(Listing l, string sellerUsername) =>
-        new(
-            l.Id,
-            l.Title,
-            l.Description,
-            l.Price,
+    internal static ListingContracts.ListingDetail ToDetail(Listing l, string sellerUsername) =>
+        new(l.Id, l.Title, l.Description, l.Price,
             $"/api/pictures/{l.MarketPictureKey}",
-            l.GalleryImages
-                .OrderBy(g => g.Order)
+            l.GalleryImages.OrderBy(g => g.Order)
                 .Select(g => new ListingContracts.DescriptionPicture(g.Id, $"/api/pictures/{g.StorageKey}"))
                 .ToList(),
-            sellerUsername,
-            l.Status.ToString(),
-            l.DownloadAble,
-            l.PrintAble);
+            sellerUsername, l.Status.ToString(), l.DownloadAble, l.PrintAble);
 }

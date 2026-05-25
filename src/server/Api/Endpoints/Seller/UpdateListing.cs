@@ -17,99 +17,97 @@ public class UpdateListing : IEndpoint
         app.MapPut("/api/listings/{id}", Handler)
             .RequireAuthorization()
             .DisableAntiforgery()
-            .WithName("UpdateListing");
+            .WithName("UpdateListing")
+            .Produces<ListingContracts.ListingDetail>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound);
+    }
+
+    // All fields optional. null = absent = keep current.
+    private class Request
+    {
+        public string?  Title        { get; set; }
+        public string?  Description  { get; set; }
+        public decimal? Price        { get; set; }
+        public bool?    DownloadAble { get; set; }
+        public bool?    PrintAble    { get; set; }
+        public IFormFile?           Thumbnail     { get; set; }
+        public IFormFileCollection? GalleryImages { get; set; }
     }
 
     private static async Task<IResult> Handler(
         [FromRoute] Guid id,
+        [FromForm] Request req,
         HttpContext context,
-        HttpRequest request,
         IPictureStorage pictureStorage,
         UserManager<User> users,
         SharePrintDbContext db)
     {
-        if (!request.HasFormContentType)
-            return Results.Problem("Multipart form required.", statusCode: 400);
-
         var listing = await db.Listings
             .Include(l => l.GalleryImages)
             .FirstOrDefaultAsync(l => l.Id == id);
-        if (listing is null) return Results.NotFound();
+        if (listing is null) return TypedResults.NotFound();
 
         var user = (await users.GetUserAsync(context.User))!;
-        if (listing.SellerId != user.Id) return Results.Forbid();
+        if (listing.SellerId != user.Id) return TypedResults.Forbid();
 
-        var form = await request.ReadFormAsync();
-
-        // ---------- Text fields ----------
-        if (form.ContainsKey("title"))
+        // Text fields — null = skip
+        if (req.Title is not null)
         {
-            var title = form["title"].ToString();
-            if (string.IsNullOrWhiteSpace(title))
-                return Results.Problem("Title required.", statusCode: 400);
-            listing.Title = title;
+            if (string.IsNullOrWhiteSpace(req.Title))
+                return TypedResults.Problem("Title required.", statusCode: 400);
+            listing.Title = req.Title;
+        }
+        if (req.Description is not null) listing.Description = req.Description;
+        if (req.Price is not null)
+        {
+            if (req.Price <= 0) return TypedResults.Problem("Price must be > 0.", statusCode: 400);
+            listing.Price = req.Price.Value;
         }
 
-        if (form.ContainsKey("description"))
-            listing.Description = form["description"].ToString();
-
-        if (form.ContainsKey("price"))
-        {
-            if (!decimal.TryParse(form["price"],
-                    System.Globalization.NumberStyles.Number,
-                    System.Globalization.CultureInfo.InvariantCulture,
-                    out var price) || price <= 0)
-                return Results.Problem("Price must be > 0.", statusCode: 400);
-            listing.Price = price;
-        }
-
-        // ---------- Purchase type fields ----------
-        var newDownloadAble = bool.TryParse(form["downloadAble"], out var ndl) ? ndl : listing.DownloadAble;
-        var newPrintAble    = bool.TryParse(form["printAble"],    out var npr) ? npr : listing.PrintAble;
+        // Purchase types — null = keep current
+        var newDownloadAble = req.DownloadAble ?? listing.DownloadAble;
+        var newPrintAble    = req.PrintAble    ?? listing.PrintAble;
         if (!newDownloadAble && !newPrintAble)
-            return Results.Problem("Minst ett val av köp val", statusCode: 400);
+            return TypedResults.Problem("Minst ett val av köp val", statusCode: 400);
         listing.DownloadAble = newDownloadAble;
         listing.PrintAble    = newPrintAble;
 
-        // ---------- Picture fields ----------
-        var thumb = form.Files["thumbnail"];
-        var gallery = form.Files.GetFiles("galleryImages");
+        // Pictures — null = skip
+        var replaceThumb   = req.Thumbnail is not null && req.Thumbnail.Length > 0;
+        var galleryFiles   = req.GalleryImages?.GetFiles("galleryImages") ?? [];
+        var replaceGallery = galleryFiles.Count > 0;
 
-        var replaceThumb = thumb is not null && thumb.Length > 0;
-        var replaceGallery = gallery.Count > 0;
-
-        if (replaceThumb && !await ValidateImageAsync(thumb!))
-            return Results.Problem("Thumbnail invalid (mime/size/magic).", statusCode: 400);
-
+        if (replaceThumb && !await ValidateImageAsync(req.Thumbnail!))
+            return TypedResults.Problem("Thumbnail invalid (mime/size/magic).", statusCode: 400);
         if (replaceGallery)
         {
-            if (gallery.Count > 5)
-                return Results.Problem("Gallery must contain 1 to 5 images.", statusCode: 400);
-            foreach (var img in gallery)
+            if (galleryFiles.Count > 5)
+                return TypedResults.Problem("Gallery must contain 1 to 5 images.", statusCode: 400);
+            foreach (var img in galleryFiles)
                 if (!await ValidateImageAsync(img))
-                    return Results.Problem("Gallery image invalid (mime/size/magic).", statusCode: 400);
+                    return TypedResults.Problem("Gallery image invalid (mime/size/magic).", statusCode: 400);
         }
 
-        // Capture old keys before mutation so post-commit cleanup can delete them.
-        var oldThumbKey = listing.MarketPictureKey;
+        var oldThumbKey   = listing.MarketPictureKey;
         var oldGalleryKeys = listing.GalleryImages.Select(g => g.StorageKey).ToList();
-
-        var newKeys = new List<string>();   // any blob we wrote this request; used for rollback
+        var newKeys        = new List<string>();
         string? newThumbKey = null;
-        var newGalleryKeys = new List<string>();
+        var newGalleryKeys  = new List<string>();
 
         try
         {
             if (replaceThumb)
             {
-                await using var s = thumb!.OpenReadStream();
-                newThumbKey = await pictureStorage.SaveAsync(s, thumb.ContentType);
+                await using var s = req.Thumbnail!.OpenReadStream();
+                newThumbKey = await pictureStorage.SaveAsync(s, req.Thumbnail.ContentType);
                 newKeys.Add(newThumbKey);
             }
-
             if (replaceGallery)
             {
-                foreach (var img in gallery)
+                foreach (var img in galleryFiles)
                 {
                     await using var s = img.OpenReadStream();
                     var key = await pictureStorage.SaveAsync(s, img.ContentType);
@@ -119,17 +117,11 @@ public class UpdateListing : IEndpoint
             }
 
             if (replaceThumb) listing.MarketPictureKey = newThumbKey!;
-
             if (replaceGallery)
             {
                 db.ListingImages.RemoveRange(listing.GalleryImages);
                 var newRows = newGalleryKeys
-                    .Select((k, i) => new ListingImage
-                    {
-                        ListingId = listing.Id,
-                        StorageKey = k,
-                        Order = i
-                    })
+                    .Select((k, i) => new ListingImage { ListingId = listing.Id, StorageKey = k, Order = i })
                     .ToList();
                 db.ListingImages.AddRange(newRows);
                 listing.GalleryImages = newRows;
@@ -137,21 +129,18 @@ public class UpdateListing : IEndpoint
 
             await db.SaveChangesAsync();
 
-            // Commit succeeded -> retire old blobs. Best-effort: orphaned blobs
-            // are tolerable, missing customer images are not.
             if (replaceThumb && oldThumbKey != "")
-                try { await pictureStorage.DeleteAsync(oldThumbKey); } catch { /* log */ }
+                try { await pictureStorage.DeleteAsync(oldThumbKey); } catch { }
             if (replaceGallery)
                 foreach (var k in oldGalleryKeys)
-                    try { await pictureStorage.DeleteAsync(k); } catch { /* log */ }
+                    try { await pictureStorage.DeleteAsync(k); } catch { }
 
-            return Results.Ok(ToDetail(listing, user.UserName ?? "Unknown"));
+            return TypedResults.Ok(ListingEndpoints.ToDetail(listing, user.UserName ?? "Unknown"));
         }
         catch
         {
-            // Pre-commit failure. Roll back any blobs we wrote; old data still intact.
             foreach (var k in newKeys)
-                try { await pictureStorage.DeleteAsync(k); } catch { /* log */ }
+                try { await pictureStorage.DeleteAsync(k); } catch { }
             throw;
         }
     }
@@ -162,26 +151,7 @@ public class UpdateListing : IEndpoint
         var buffer = new byte[Math.Min(file.Length, 16)];
         await using var s = file.OpenReadStream();
         var read = await s.ReadAsync(buffer);
-        return PictureValidator.IsAllowedImage(
-            buffer.AsSpan(0, read),
-            file.ContentType,
-            PictureValidator.DefaultMaxBytes,
-            out _);
+        return PictureValidator.IsAllowedImage(buffer.AsSpan(0, read), file.ContentType,
+            PictureValidator.DefaultMaxBytes, out _);
     }
-
-    private static ListingContracts.ListingDetail ToDetail(Listing l, string sellerUsername) =>
-        new(
-            l.Id,
-            l.Title,
-            l.Description,
-            l.Price,
-            $"/api/pictures/{l.MarketPictureKey}",
-            l.GalleryImages
-                .OrderBy(g => g.Order)
-                .Select(g => new ListingContracts.DescriptionPicture(g.Id, $"/api/pictures/{g.StorageKey}"))
-                .ToList(),
-            sellerUsername,
-            l.Status.ToString(),
-            l.DownloadAble,
-            l.PrintAble);
 }

@@ -26,5 +26,4 @@ public class ListingContracts
         bool DownloadAble,
         bool PrintAble);
 
-    public record UpdateListingRequest(string Title, string Description, decimal Price);
 }

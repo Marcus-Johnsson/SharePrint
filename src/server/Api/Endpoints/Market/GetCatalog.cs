@@ -1,20 +1,23 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SharePrint.Api.Contracts;
 using SharePrint.Api.Endpoints._internal;
 using SharePrint.Application.Listings;
 using SharePrint.Domain;
 using SharePrint.Infrastructure.Persistence;
-using static SharePrint.Api.Contracts.ListingContracts;
 
 namespace SharePrint.Api.Endpoints.Market;
 
-public class ListingContract : IEndpoint
+public class GetCatalog : IEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("/api/listings", Handler)
-            .WithName("GetCatalog");
+            .RequireAuthorization()
+            .WithName("GetCatalog")
+            .Produces<IReadOnlyList<ListingContracts.ListingSummary>>(StatusCodes.Status200OK);
     }
+
     private static async Task<IResult> Handler(
         SharePrintDbContext db,
         UserManager<User> users,
@@ -22,31 +25,30 @@ public class ListingContract : IEndpoint
         int pageSize = 20)
     {
         if (page < 1) page = 1;
-        if(pageSize is < 1 or > 100) pageSize = 20;
+        if (pageSize is < 1 or > 100) pageSize = 20;
 
-        var items = await db.Listings.Where(l => l.Status == ListingStatus.Active)
-            .OrderByDescending(d => d.CreatedAt)
+        var items = await db.Listings
+            .Where(l => l.Status == ListingStatus.Active)
+            .OrderByDescending(l => l.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
 
-        var result = new List<ListingSummary>(items.Count);
+        var result = new List<ListingContracts.ListingSummary>(items.Count);
         foreach (var listing in items)
         {
             var seller = await users.FindByIdAsync(listing.SellerId);
-            result.Add(ToSummary(listing, seller?.UserName ?? "unknown"));
+            result.Add(new ListingContracts.ListingSummary(
+                listing.Id,
+                listing.Title,
+                DescriptionPreview.From(listing.Description),
+                listing.Price,
+                $"/api/pictures/{listing.MarketPictureKey}",
+                seller?.UserName ?? "unknown",
+                listing.DownloadAble,
+                listing.PrintAble));
         }
-        return Results.Ok(result);
-    }
-    internal static ListingSummary ToSummary(Listing l, string sellerUsername) =>
-        new(
-            l.Id,
-            l.Title,
-            DescriptionPreview.From(l.Description),
-            l.Price,
-            $"/api/pictures/{l.MarketPictureKey}",
-            sellerUsername,
-            l.DownloadAble,
-            l.PrintAble);
-}
 
+        return TypedResults.Ok(result);
+    }
+}

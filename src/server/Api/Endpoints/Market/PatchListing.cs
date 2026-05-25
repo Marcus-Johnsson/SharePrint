@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using SharePrint.Api.Contracts;
 using SharePrint.Api.Endpoints._internal;
 using SharePrint.Domain;
 using SharePrint.Infrastructure.Persistence;
@@ -14,26 +13,33 @@ public class PatchListing : IEndpoint
         app.MapPatch("/api/listings/{id}", Handler)
             .RequireAuthorization()
             .DisableAntiforgery()
-            .WithName("PatchListing");
+            .WithName("PatchListing")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound);
     }
 
-    private async static Task<IResult> Handler(
+    private record Request(string Title, string Description, decimal Price);
+
+    private static async Task<IResult> Handler(
         [FromRoute] Guid id,
-        ListingContracts.UpdateListingRequest request,
+        Request req,
         HttpContext context,
         UserManager<User> users,
         SharePrintDbContext db)
     {
-        var list = await db.Listings.FindAsync(id);
-        if (list == null) return Results.NotFound();
-        var user = await users.GetUserAsync(context.User);
-        if (list.SellerId != user.Id) return Results.Forbid();
-        
-        list.Title = request.Title;
-        list.Description = request.Description;
-        list.Price = request.Price;
+        var listing = await db.Listings.FindAsync(id);
+        if (listing is null) return TypedResults.NotFound();
+
+        var user = (await users.GetUserAsync(context.User))!;
+        if (listing.SellerId != user.Id) return TypedResults.Forbid();
+
+        listing.Title       = req.Title;
+        listing.Description = req.Description;
+        listing.Price       = req.Price;
 
         await db.SaveChangesAsync();
-        return Results.Ok();
+        return TypedResults.Ok();
     }
 }
