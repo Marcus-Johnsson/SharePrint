@@ -50,6 +50,9 @@ public class Listing
 
     [EnumDataType(typeof(ListingStatus))]
     public ListingStatus Status { get; set; } = ListingStatus.Active;
-
+    
+    public bool DownloadAble { get; set; } = false;
+    
+    public bool PrintAble { get; set; } = false;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

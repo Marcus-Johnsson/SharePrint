@@ -18,7 +18,7 @@ public class SellerTests : IClassFixture<WebApplicationFactory<Program>>
 
         Assert.Equal(HttpStatusCode.OK, apply.StatusCode);
 
-        var meRes = await client.PostAsync("/api/auth/me", null);
+        var meRes = await client.GetAsync("/api/auth/me");
         meRes.EnsureSuccessStatusCode();
         var me = await meRes.Content.ReadFromJsonAsync<AuthTests.MeDto>();
         Assert.Contains("Seller", me!.roles);

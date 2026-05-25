@@ -17,7 +17,7 @@ public class AuthTests : IClassFixture<WebApplicationFactory<Program>>
             new
             {
                 email = $"{Guid.NewGuid():N}@test.com",
-                password = "Passw0rd!",
+                password = "Passw0rd!1",
                 username = $"TestCustomer{Guid.NewGuid():N}"
             });
         Assert.Equal(HttpStatusCode.OK, registerResponse.StatusCode);

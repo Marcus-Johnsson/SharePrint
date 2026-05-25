@@ -9,7 +9,7 @@ public static class CreateFakeAuth
 
     public static TestUser NewUser() => new(
         Email:    $"u{Guid.NewGuid():N}@test.se",
-        Password: "Passw0rd!",
+        Password: "Passw0rd!1",
         Username: $"User{Guid.NewGuid():N}");
     
     public static async Task<(HttpClient client, TestUser user)> RegisterAndLoginAsync(

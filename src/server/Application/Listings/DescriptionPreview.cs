@@ -14,7 +14,7 @@ public static class DescriptionPreview
 
         var byChars = byWords.Length <= maxChars
             ? byWords
-            : byWords[..maxWords].TrimEnd();
+            : byWords[..maxChars].TrimEnd();
         
         return byChars == trimmed ? trimmed : byChars + "…";
     }

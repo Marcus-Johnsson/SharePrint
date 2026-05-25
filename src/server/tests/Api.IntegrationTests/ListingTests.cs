@@ -16,7 +16,7 @@ public class ListingTests : IClassFixture<WebApplicationFactory<Program>>
         await client.PostAsJsonAsync("/api/auth/register",
             new
             {
-                email = $"T_{Guid.NewGuid():N}@test.com", password = "PasswOrd!", username = $"T_{Guid.NewGuid():N}"
+                email = $"T_{Guid.NewGuid():N}@test.com", password = "PasswOrd!1", username = $"T_{Guid.NewGuid():N}"
             });
         await client.PostAsync("/api/seller/apply", null);
         return client;
