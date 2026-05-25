@@ -8,7 +8,9 @@ public class ListingContracts
         string DescriptionPreview,
         decimal Price,
         string MarketPictureLocation,
-        string SellerUsername);
+        string SellerUsername,
+        bool DownloadAble,
+        bool PrintAble);
 
     public record DescriptionPicture(Guid Id, string Url);
 
@@ -20,7 +22,9 @@ public class ListingContracts
         string MarketPictureLocation,
         IReadOnlyList<DescriptionPicture> DescriptionPictures,
         string SellerUsername,
-        string Status);
+        string Status,
+        bool DownloadAble,
+        bool PrintAble);
 
     public record UpdateListingRequest(string Title, string Description, decimal Price);
 }

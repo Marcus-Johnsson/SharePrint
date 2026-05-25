@@ -63,6 +63,14 @@ public class UpdateListing : IEndpoint
             listing.Price = price;
         }
 
+        // ---------- Purchase type fields ----------
+        var newDownloadAble = bool.TryParse(form["downloadAble"], out var ndl) ? ndl : listing.DownloadAble;
+        var newPrintAble    = bool.TryParse(form["printAble"],    out var npr) ? npr : listing.PrintAble;
+        if (!newDownloadAble && !newPrintAble)
+            return Results.Problem("Minst ett val av köp val", statusCode: 400);
+        listing.DownloadAble = newDownloadAble;
+        listing.PrintAble    = newPrintAble;
+
         // ---------- Picture fields ----------
         var thumb = form.Files["thumbnail"];
         var gallery = form.Files.GetFiles("galleryImages");
@@ -173,5 +181,7 @@ public class UpdateListing : IEndpoint
                 .Select(g => new ListingContracts.DescriptionPicture(g.Id, $"/api/pictures/{g.StorageKey}"))
                 .ToList(),
             sellerUsername,
-            l.Status.ToString());
+            l.Status.ToString(),
+            l.DownloadAble,
+            l.PrintAble);
 }

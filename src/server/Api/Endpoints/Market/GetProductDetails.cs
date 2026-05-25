@@ -40,6 +40,8 @@ public class GetProductDetails : IEndpoint
                 .Select(g => new ListingContracts.DescriptionPicture(g.Id, $"/api/pictures/{g.StorageKey}"))
                 .ToList(),
             sellerUsername,
-            l.Status.ToString());
+            l.Status.ToString(),
+            l.DownloadAble,
+            l.PrintAble);
 }
 

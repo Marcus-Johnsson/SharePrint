@@ -30,6 +30,11 @@ public class ListingEndpoints : IEndpoint
             return Results.Problem("Fel form data");
         var form = await request.ReadFormAsync();
 
+        var downloadAble = bool.TryParse(form["downloadAble"], out var dl) && dl;
+        var printAble    = bool.TryParse(form["printAble"],    out var pr) && pr;
+        if (!downloadAble && !printAble)
+            return Results.Problem("Minst ett val av köp val", statusCode: 400);
+        
         var title = form["title"].ToString();
         if (string.IsNullOrWhiteSpace(title))
             return Results.Problem("Title required.", statusCode: 400);
@@ -94,6 +99,8 @@ public class ListingEndpoints : IEndpoint
                 SizeBytes = productFile.Length,
                 MarketPictureKey = savedThumbKey,
                 Status = ListingStatus.Active,
+                DownloadAble = downloadAble,
+                PrintAble = printAble,
                 GalleryImages = savedGalleryKeys.Select((k, i) => new ListingImage
                 {
                     StorageKey = k, Order = i
@@ -136,5 +143,7 @@ public class ListingEndpoints : IEndpoint
                 .Select(g => new ListingContracts.DescriptionPicture(g.Id, $"/api/pictures/{g.StorageKey}"))
                 .ToList(),
             sellerUsername,
-            l.Status.ToString());
+            l.Status.ToString(),
+            l.DownloadAble,
+            l.PrintAble);
 }

@@ -11,10 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Endpoints\CreateProduct\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Infrastructure\SharePrint.Infrastructure.csproj" />
     <ProjectReference Include="..\Application\SharePrint.Application.csproj" />
     <ProjectReference Include="..\Domain\SharePrint.Domain.csproj" />

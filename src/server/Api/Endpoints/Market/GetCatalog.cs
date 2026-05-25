@@ -38,13 +38,15 @@ public class ListingContract : IEndpoint
         }
         return Results.Ok(result);
     }
-    internal static ListingSummary ToSummary(Listing l, string sellerUsername) =>  // These can be turned into a dto to prevent copies
+    internal static ListingSummary ToSummary(Listing l, string sellerUsername) =>
         new(
             l.Id,
             l.Title,
             DescriptionPreview.From(l.Description),
             l.Price,
             $"/api/pictures/{l.MarketPictureKey}",
-            sellerUsername);
+            sellerUsername,
+            l.DownloadAble,
+            l.PrintAble);
 }
 
