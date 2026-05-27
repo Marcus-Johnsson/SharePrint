@@ -1,5 +1,6 @@
 <script lang="ts">
   import { auth, isSeller } from '$lib/services/auth.svelte';
+  import { ui } from '$lib/services/auth.svelte';
 
   let sellerRole = $state(isSeller.call(auth.Roles));
 </script>
@@ -14,7 +15,7 @@
   <dt>Veriferad användare</dt>
   <dd>{sellerRole ?? '—'} 
     {#if sellerRole === false}
-      <button class="verified" >verifiera</button>
+      <button class="verified" onclick={() => ui.showVerifyPopup = true}>verifiera</button>
     {/if}
     </dd>
 </dl>

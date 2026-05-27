@@ -49,7 +49,7 @@ public class AuthEndpoints : IEndpoint
                 if (user == null) return Results.Unauthorized();
 
                 var roles = await users.GetRolesAsync(user);
-                return Results.Ok(new MeResponse(user.Id, user.Email, user.UserName, roles.ToArray()));
+                return Results.Ok(new MeResponse(user.Email, user.UserName, roles.ToArray()));
             });
 
     }

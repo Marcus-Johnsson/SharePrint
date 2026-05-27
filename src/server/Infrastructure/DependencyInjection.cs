@@ -7,6 +7,7 @@ using SharePrint.Domain;
 using SharePrint.Infrastructure.Payments;
 using SharePrint.Infrastructure.Persistence;
 using SharePrint.Infrastructure.Storage;
+using Stripe;
 
 namespace SharePrint.Infrastructure;
 
@@ -60,5 +61,11 @@ public static class DependencyInjection
             services.AddSingleton<IPaymentProcessor, FakePaymentProcessor>();
         else
             throw new InvalidOperationException($"Unknown Payment:Provider '{pay}'.");
+
+        // Stripe seller onboarding (SetupIntent flow). Always wired - independent of buyer payment provider.
+        var stripeKey = cfg["Stripe:SecretKey"]
+            ?? throw new InvalidOperationException("Stripe:SecretKey missing in configuration.");
+        StripeConfiguration.ApiKey = stripeKey;
+        services.AddScoped<ISellerOnboarding, StripeSellerOnboarding>();
     }
 }

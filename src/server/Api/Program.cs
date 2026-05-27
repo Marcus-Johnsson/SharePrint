@@ -9,9 +9,6 @@ using SharePrint.Infrastructure.Persistence;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// builder.Services.AddDbContext<SharePrintDbContext>(options =>
-//    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
 builder.Services.AddOpenApi();
 builder.Services.AddAuthorization();
 builder.Services.AddValidation();

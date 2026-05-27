@@ -2,16 +2,16 @@ import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
 import type { ListingDetail } from "./listingService";
 import { PUBLIC_API_URL } from "$env/static/public";
+import { GetUserInformation } from "./GetUserInformation";
 
 
 
-class AuthState {
+export class AuthState {
 	isAuthenticated = $state<boolean | null>(null);
     Username = $state<string| null>(null);
     Email = $state<string | null>(null);
     Roles = $state<string[]>([]);
     Cart = $state<Cart | []>([]);
-
 };
 
 class Cart {
@@ -22,6 +22,12 @@ export const auth = new AuthState();
 export const cart = new Cart();
 export const isSeller = () => auth.Roles.includes('Seller');
 export const isAdmin = () => auth.Roles.includes('Admin'); // no plan for admin parts but created for future ref
+
+// Global UI flag for seller-verify popup. Any component can flip this.
+class UiState {
+    showVerifyPopup = $state(false);
+}
+export const ui = new UiState();
 
 
 
@@ -64,14 +70,46 @@ function clearSession() {
 }
 
 function clearStore() {
-    auth.isAuthenticated = false,
-    auth.Username = null,
-    auth.Email = null,
+    auth.isAuthenticated = false;
+    auth.Username = null;
+    auth.Email = null;
+    auth.Roles = [];
     auth.Cart = [];
 }
 
 function emptyCart() {
     cart.listingDetail = [];
+}
+
+/**
+ * Run once at app start (root +layout.svelte onMount).
+ * 1) Hydrate auth store from localStorage for an instant UI (no flash).
+ * 2) Verify with backend /auth/me. On 401 the apiService clears the flag
+ *    and we wipe localStorage to drop the stale optimistic state.
+ */
+export async function bootstrapAuth() {
+    if (!browser) return;
+
+    const stored = getStoredSession();
+    if (stored.isAuthenticated) {
+        auth.isAuthenticated = stored.isAuthenticated;
+        auth.Email = stored.Email;
+        auth.Username = stored.Username;
+        auth.Roles = stored.Roles ?? [];
+    }
+
+    const me = await GetUserInformation();
+    if (!me) {
+        clearStore();
+        clearSession();
+    } else {
+        saveSession({
+            isAuthenticated: true,
+            Email: me.email,
+            Username: me.displayName,
+            Roles: me.roles,
+        });
+    }
 }
 
 export const logout = async () => {
@@ -107,15 +145,17 @@ export const login = async (payload: {email: string, password: string} ) => {
 		});
 
         if(response.ok) {
-            const data: { email: string; userName: string } = await response.json();
-            auth.isAuthenticated = true;
-            auth.Email = data.email;
-            auth.Username = data.userName;
+            const me = await GetUserInformation();
+            if (!me) {
+                console.error('Login succeeded but /me failed');
+                return;
+            }
 
             saveSession({
                 isAuthenticated: true,
-                Email: data.email,
-                Username: data.userName,
+                Email: me.email,
+                Username: me.displayName,
+                Roles: me.roles,
             });
 
             await goto('/', { replaceState: true });
@@ -191,7 +231,6 @@ export const changePassword = async (oldPassword: string, newPassword: string) =
         return { success: false, message: error }
     }
 }
-
 
 export const applyToSellerRole = async () => {
     // stripe logic unknow for now

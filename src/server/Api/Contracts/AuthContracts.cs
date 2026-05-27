@@ -18,8 +18,6 @@ public static class AuthContracts
         [property: Required] string Password);
     public record MeResponse(
         [Required]
-        string Id,
-        [Required]
         string Email,
         [Required]
         string DisplayName,
