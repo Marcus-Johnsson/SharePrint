@@ -1,0 +1,62 @@
+import { api } from './apiService';
+
+export type ListingSummary = {
+    id: string,
+    title: string,
+    descriptionPreview: string,
+    price: number,
+    marketPictureLocation: string,
+    sellerUsername: string,
+    downloadAble: boolean,
+    printAble: boolean
+};
+
+export type DescriptionPicutre = {
+    id: string,
+    url: string
+};
+
+export type ListingDetail = {
+    id: string,
+    title: string,
+    description: string,
+    price: number,
+    marketPictureLocation: string,
+    descriptionPictures: DescriptionPicutre[],
+    sellerUsername: string,
+    status: string,
+    downloadAble: boolean,
+    printAble: boolean
+};
+
+export const listingService = {
+    catalog: (page = 1, pageSize = 20) =>
+        api.get<ListingSummary[]>(`listings/${page}/${pageSize}`),
+
+    detail: (id: string) =>
+        api.get<ListingDetail>(`listings/${id}`),
+
+    create: (form: FormData) =>
+        api.upload<ListingDetail>('listings', form, 'POST'),
+
+    replaceThumbnail: (id: string, file: File) => {
+        const form = new FormData();
+        form.append('thumbnail', file);
+        return api.upload<ListingDetail>(`listings/${id}/thumbnail`, form, 'PUT');
+    },
+
+    addGalleryImage: (id: string, file: File) => {
+        const form = new FormData();
+        form.append('image', file);
+        return api.upload<ListingDetail>(`listings/${id}/gallery`, form, 'POST');
+    },
+
+    deleteGalleryImage: (id: string, imageId: string) =>
+        api.delete<ListingDetail>(`listings/${id}/gallery/${imageId}`),
+
+    patch: (id: string, body: { title: string; description: string; price: number }) =>
+        api.patch<unknown, typeof body>(`listings/${id}`, body),
+
+    unlist: (id: string) =>
+        api.post<unknown, undefined>(`listings/${id}/unlist`, undefined),
+};

@@ -14,7 +14,6 @@ public class GetProductDetails : IEndpoint
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("/api/listings/{id}", Handler)
-            .RequireAuthorization()
             .WithName("GetProductDetails")
             .Produces<ListingContracts.ListingDetail>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status404NotFound);

@@ -32,7 +32,7 @@ public class AuthEndpoints : IEndpoint
                 var user = await users.FindByEmailAsync(loginRequest.Email);
                 if (user is null) return Results.Problem("Invalid login attempt", statusCode: 401);
                 var result = await signin.PasswordSignInAsync(user, loginRequest.Password, true, false);
-                return result.Succeeded ? Results.Ok() : Results.Problem("Invalid login attempt", statusCode: 401);
+                return result.Succeeded ? Results.Ok(new { user.Email, user.UserName }) : Results.Problem("Invalid login attempt", statusCode: 401);
             });
 
         action.MapPost("/logout",

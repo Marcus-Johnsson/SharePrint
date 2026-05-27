@@ -5,5 +5,5 @@ namespace SharePrint.Domain;
 
 public class User : IdentityUser
 {
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow; 
 }

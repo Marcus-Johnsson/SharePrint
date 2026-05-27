@@ -78,14 +78,17 @@ export class ApiService {
         } catch (e) { return { code: 'NETWORK_ERROR', message: 'Network error', details: e }; }
     }
 
-    async postFormData<T>(endpoint: string, form: FormData): Promise<T | null | AppError> {
+    async upload<T>(endpoint: string, form: FormData, method: 'POST' | 'PUT' = 'POST'): Promise<T | null | AppError> {
         try {
-        const res = await this.fetch(`${apiUrl}/${endpoint}`, { method: 'POST', credentials: 'include', body: form });
+        const res = await this.fetch(`${apiUrl}/${endpoint}`, { method, credentials: 'include', body: form });
         if (!res.ok) {
             const ae = authError(res); if (ae) return ae;
-            return { code: 'API_ERROR', message: `POST ${endpoint} failed`, status: res.status, details: await res.text() };
+            return { code: 'API_ERROR', message: `${method} ${endpoint} failed`, status: res.status, details: await res.text() };
         }
         return await this.parse<T>(res);
         } catch (e) { return { code: 'NETWORK_ERROR', message: 'Network error', details: e }; }
     }
 }
+
+
+export const api = new ApiService();

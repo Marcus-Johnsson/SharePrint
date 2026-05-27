@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SharePrint.Api.Contracts;
 using SharePrint.Api.Endpoints._internal;
@@ -12,8 +13,7 @@ public class GetCatalog : IEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/listings", Handler)
-            .RequireAuthorization()
+        app.MapGet("/api/listings/{page}/{pageSize}", Handler)
             .WithName("GetCatalog")
             .Produces<IReadOnlyList<ListingContracts.ListingSummary>>(StatusCodes.Status200OK);
     }
@@ -21,8 +21,8 @@ public class GetCatalog : IEndpoint
     private static async Task<IResult> Handler(
         SharePrintDbContext db,
         UserManager<User> users,
-        int page = 1,
-        int pageSize = 20)
+        [FromRoute] int page = 1,
+        [FromRoute] int pageSize = 20)
     {
         if (page < 1) page = 1;
         if (pageSize is < 1 or > 100) pageSize = 20;
