@@ -19,6 +19,11 @@ public class OrderItem
 
     [Range(typeof(decimal), "1", "1000")]
     public decimal UnitPrice { get; set; }
+    
+    public bool DownloadPath { get; set; } = false;
+    
+    public bool PrintPath { get; set; } = false;
+
 
     public DownloadGrant? Grant { get; set; }
 }

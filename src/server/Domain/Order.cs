@@ -20,6 +20,9 @@ public class Order
     [EnumDataType(typeof(OrderStatus))]
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
+    [StringLength(255)]
+    public string? StripePaymentIntentId { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     [MinLength(1)]
