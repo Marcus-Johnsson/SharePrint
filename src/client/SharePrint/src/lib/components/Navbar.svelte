@@ -21,9 +21,7 @@
     { href: '/userPage/downloads', label: 'Mina nedladdningar' }
   ];
   let openMenu = $state<'market' | 'user' | 'cart' | null>(null);
-  let cartItemCount = $derived(
-    cart.products.reduce((n, item) => n + item.amount, 0)
-  );
+  let cartItemCount = $derived(cart.products.length);
 
   function toggle(menu: 'market' | 'user' | 'cart') {
     openMenu = openMenu === menu ? null : menu;

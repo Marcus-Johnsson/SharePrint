@@ -26,35 +26,35 @@
             <p class="empty">Your cart is empty.</p>
         {:else}
             {#each cart.products as cartItem (cartItem.product.id)}
-                <article class="item" title={cartItem.product.title}>
+                {@const both = cartItem.product.downloadAble && cartItem.product.printAble}
+                <article
+                    class="item"
+                    class:needs-pick={cartItem.selectedOption === null}
+                    title={cartItem.product.title}
+                >
                     <span class="title">{cartItem.product.title}</span>
-                    <span class="unit">{cartItem.product.price.toFixed(2)}</span>
-                    <input
-                        class="qty"
-                        type="number"
-                        min="0"
-                        bind:value={cartItem.amount}
-                        onchange={() => cart.setAmount(cartItem.product.id, cartItem.amount)}
-                        aria-label="Amount"
-                    />
-                    <div class="stepper" role="group" aria-label="Quantity">
-                        <button
-                            class="step"
-                            aria-label="Decrease"
-                            onclick={() => cart.reduceAmount(cartItem.product.id)}
-                        >−</button>
-                        <button
-                            class="step"
-                            aria-label="Increase"
-                            onclick={() => cart.addListing(cartItem.product)}
-                        >+</button>
-                    </div>
-                    <span class="line-total">{(cartItem.product.price * cartItem.amount).toFixed(2)}</span>
-                    <button
-                        class="remove-btn"
-                        aria-label="Remove item"
-                        onclick={() => cart.remove(cartItem.product.id)}
-                    >🗑️</button>
+                    <span class="unit">{cart.unitPrice(cartItem).toFixed(2)} SEK</span>
+                    <button class="remove-btn" aria-label="Remove item"
+                            onclick={() => cart.remove(cartItem.product.id)}>🗑️</button>
+
+                    {#if both}
+                        <div class="path-picker" role="radiogroup" aria-label="Choose format">
+                            <button
+                                class="path-btn"
+                                class:active={cartItem.selectedOption === 'download'}
+                                onclick={() => cart.setOption(cartItem.product.id, 'download')}
+                            >Download</button>
+                            <button
+                                class="path-btn"
+                                class:active={cartItem.selectedOption === 'print'}
+                                onclick={() => cart.setOption(cartItem.product.id, 'print')}
+                            >Print</button>
+                        </div>
+                    {:else}
+                        <span class="path-label">
+                            {cartItem.product.printAble ? 'Print only' : 'Download only'}
+                        </span>
+                    {/if}
                 </article>
             {/each}
         {/if}
@@ -68,7 +68,8 @@
         <button
             class="checkout"
             onclick={proceedToCheckout}
-            disabled={cart.products.length === 0}
+            disabled={cart.products.length === 0 || !cart.allOptionsChosen}
+            title={!cart.allOptionsChosen ? 'Choose Download or Print for each item' : ''}
         >Checkout</button>
     </footer>
 </div>
@@ -139,9 +140,9 @@
 
 .item {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto auto auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;
-    column-gap: var(--space-2);
+    column-gap: var(--space-3);
     padding: var(--space-2) var(--space-1);
     border-bottom: 1px solid var(--color-border);
     font-size: 0.85rem;
@@ -168,56 +169,6 @@
     font-size: 0.8rem;
 }
 
-.stepper {
-    display: inline-flex;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-}
-.step {
-    width: 24px;
-    height: 26px;
-    background: var(--color-bg);
-    border: none;
-    border-radius: 0;
-    color: var(--color-text);
-    font-weight: 700;
-    padding: 0;
-    line-height: 1;
-}
-.step + .step {
-    border-left: 1px solid var(--color-border);
-}
-.step:hover:not(:disabled) {
-    background: var(--color-accent);
-    color: #fff;
-}
-.qty {
-    width: 42px;
-    height: 26px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    text-align: center;
-    padding: 0;
-    font-variant-numeric: tabular-nums;
-    -moz-appearance: textfield;
-}
-.qty::-webkit-outer-spin-button,
-.qty::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-.line-total {
-    font-weight: 600;
-    color: var(--color-text);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    min-width: 64px;
-    text-align: right;
-    font-size: 0.8rem;
-}
-
 .remove-btn {
     background: transparent;
     border: none;
@@ -234,6 +185,48 @@
 .remove-btn:hover {
     opacity: 1;
     background: var(--color-border);
+}
+
+.path-picker {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: var(--space-1);
+    margin-top: var(--space-1);
+}
+.path-btn {
+    flex: 1;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-muted);
+    margin: 0;
+}
+.path-btn:hover {
+    background: var(--color-bg);
+}
+.path-btn.active {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+}
+.path-label {
+    grid-column: 1 / -1;
+    margin-top: var(--space-1);
+    font-size: 0.7rem;
+    color: var(--color-muted);
+    font-style: italic;
+}
+.item.needs-pick {
+    background: rgba(255, 155, 81, 0.08);
+}
+.item.needs-pick .path-picker::before {
+    content: '⚠ pick one →';
+    color: var(--color-accent);
+    font-size: 0.7rem;
+    align-self: center;
+    margin-right: var(--space-1);
 }
 
 .foot {

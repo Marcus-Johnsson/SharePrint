@@ -1,14 +1,5 @@
 <script lang="ts">
-  type DownloadItem = {
-    id: string;
-    title: string;
-    remaining: number;
-  };
-
-  const items: DownloadItem[] = [
-    { id: '1', title: 'Sample path A', remaining: 3 },
-    { id: '2', title: 'Sample path B', remaining: 0 }
-  ];
+  
 </script>
 
 <h1>Downloads</h1>
