@@ -67,5 +67,6 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Stripe:SecretKey missing in configuration.");
         StripeConfiguration.ApiKey = stripeKey;
         services.AddScoped<ISellerOnboarding, StripeSellerOnboarding>();
+        services.AddScoped<ICheckoutPayments, StripeCheckoutPayments>();
     }
 }

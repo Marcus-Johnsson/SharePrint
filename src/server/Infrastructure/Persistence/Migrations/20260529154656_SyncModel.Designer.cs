@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SharePrint.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using SharePrint.Infrastructure.Persistence;
 namespace SharePrint.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(SharePrintDbContext))]
-    partial class SharePrintDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260529154656_SyncModel")]
+    partial class SyncModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -293,18 +296,11 @@ namespace SharePrint.Infrastructure.Persistence.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<string>("StripePaymentIntentId")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
                     b.Property<decimal>("TotalPrice")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("StripePaymentIntentId")
-                        .IsUnique();
 
                     b.ToTable("Orders");
                 });

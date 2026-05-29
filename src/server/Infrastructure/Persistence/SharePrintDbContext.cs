@@ -21,6 +21,7 @@ public class SharePrintDbContext : IdentityDbContext<User>
     {
         base.OnModelCreating(b);
         b.Entity<Order>().HasMany(o => o.Items).WithOne().HasForeignKey(i => i.OrderId);
+        b.Entity<Order>().HasIndex(o => o.StripePaymentIntentId).IsUnique();
         b.Entity<OrderItem>().HasOne(i => i.Grant).WithOne().HasForeignKey<DownloadGrant>(g => g.OrderItemId);
         b.Entity<Listing>().Property(l => l.Price).HasPrecision(18, 2);
         b.Entity<Order>().Property(o => o.TotalPrice).HasPrecision(18, 2);
