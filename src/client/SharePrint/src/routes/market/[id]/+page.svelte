@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { PageProps } from './$types';
     import type { ListingDetail } from '$lib/services/listingService';
+    import { cart } from '$lib/stores/cartStore.svelte';
 
     let { data }: PageProps = $props();
 
@@ -36,7 +37,8 @@
             {#if listing.printAble}<span class="flag">🖨️ Print</span>{/if}
         </div>
         <div class="actions">
-            <button type="button" class="primary">Add to cart</button>
+              <button class="btn" type="button" onclick={() => cart.addListing(listing)}>🛒</button>
+
         </div>
     </section>
 </article>

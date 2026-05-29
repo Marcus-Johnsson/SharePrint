@@ -1,6 +1,8 @@
 <script lang="ts">
   import { page } from '$app/state';
   import { auth, logout } from '$lib/services/auth.svelte';
+  import { cart } from '$lib/stores/cartStore.svelte';
+  import CartPreview from "$lib/components/CartPreview.svelte";
 
   type DropItem = { href: string; label: string };
 
@@ -18,10 +20,12 @@
     { href: '/userPage/receipts', label: 'Kvitton' },
     { href: '/userPage/downloads', label: 'Mina nedladdningar' }
   ];
+  let openMenu = $state<'market' | 'user' | 'cart' | null>(null);
+  let cartItemCount = $derived(
+    cart.products.reduce((n, item) => n + item.amount, 0)
+  );
 
-  let openMenu = $state<'market' | 'user' | null>(null);
-
-  function toggle(menu: 'market' | 'user') {
+  function toggle(menu: 'market' | 'user' | 'cart') {
     openMenu = openMenu === menu ? null : menu;
   }
 
@@ -30,9 +34,13 @@
   }
 
   function onWindowClick(e: MouseEvent) {
-    const target = e.target as HTMLElement;
-    if (!target.closest('.dropdown')) close();
+    const path = e.composedPath();
+    for (const el of path) {
+      if (el instanceof HTMLElement && el.classList.contains('dropdown')) return;
+    }
+    close();
   }
+
 
   $effect(() => {
     window.addEventListener('click', onWindowClick);
@@ -88,10 +96,16 @@
     Logga in
   </a>
     {/if}
-  <a class="cart" href="/cart" aria-label="Shopping cart">
-    Cart
-    <span class="badge">0</span>
-  </a>
+ 
+    <div class="dropdown">
+      <button onclick={() => toggle('cart')} class="cart" aria-label="Cart">
+        Cart
+        <span class="badge">{cartItemCount}</span>
+      </button>
+      <CartPreview showCart={openMenu === 'cart'} onClose={close}/>
+    </div>
+    
+ 
 </nav>
 
 <style>

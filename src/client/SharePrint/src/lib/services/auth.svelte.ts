@@ -1,25 +1,16 @@
 import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
-import type { ListingDetail } from "./listingService";
 import { PUBLIC_API_URL } from "$env/static/public";
 import { GetUserInformation } from "./GetUserInformation";
-
-
 
 export class AuthState {
 	isAuthenticated = $state<boolean | null>(null);
     Username = $state<string| null>(null);
     Email = $state<string | null>(null);
     Roles = $state<string[]>([]);
-    Cart = $state<Cart | []>([]);
 };
 
-class Cart {
-    listingDetail: ListingDetail[] = [];
-}
-
 export const auth = new AuthState();
-export const cart = new Cart();
 export const isSeller = () => auth.Roles.includes('Seller');
 export const isAdmin = () => auth.Roles.includes('Admin'); // no plan for admin parts but created for future ref
 
@@ -28,9 +19,6 @@ class UiState {
     showVerifyPopup = $state(false);
 }
 export const ui = new UiState();
-
-
-
 
 function saveSession(session: Partial<AuthState>) {
     if(browser) {
@@ -57,9 +45,6 @@ export function getStoredSession(): AuthState {
         Username: null,
         Email: null,
         Roles: [],
-        Cart: {
-            listingDetail: []
-        }
     };
 }
 
@@ -74,19 +59,8 @@ function clearStore() {
     auth.Username = null;
     auth.Email = null;
     auth.Roles = [];
-    auth.Cart = [];
 }
 
-function emptyCart() {
-    cart.listingDetail = [];
-}
-
-/**
- * Run once at app start (root +layout.svelte onMount).
- * 1) Hydrate auth store from localStorage for an instant UI (no flash).
- * 2) Verify with backend /auth/me. On 401 the apiService clears the flag
- *    and we wipe localStorage to drop the stale optimistic state.
- */
 export async function bootstrapAuth() {
     if (!browser) return;
 
@@ -123,7 +97,7 @@ export const logout = async () => {
             clearSession();
             clearStore();
 
-            await goto('/login', { replaceState: true });
+            await goto('/', { replaceState: true });
         }else {
 			console.error('Logout failed');
 		}

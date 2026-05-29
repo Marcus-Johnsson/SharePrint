@@ -16,6 +16,17 @@ export type DescriptionPicutre = {
     url: string
 };
 
+export type ListinCreation = {
+    title: string,
+    description: string,
+    price: number,
+    marketPicture: File,
+    thumbnail: FileList,
+    file: File,
+    downloadAble: boolean,
+    printAble: boolean
+};
+
 export type ListingDetail = {
     id: string,
     title: string,
@@ -37,7 +48,7 @@ export const listingService = {
         api.get<ListingDetail>(`listings/${id}`),
 
     create: (form: FormData) =>
-        api.upload<ListingDetail>('listings', form, 'POST'),
+        api.upload('listings', form, 'POST'),
 
     replaceThumbnail: (id: string, file: File) => {
         const form = new FormData();

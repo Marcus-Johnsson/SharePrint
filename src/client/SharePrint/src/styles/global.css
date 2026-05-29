@@ -7,6 +7,7 @@
   --color-accent: #FF9B51;
   --color-accent-hover: #E8853A;
   --color-danger: #B00020;
+  --color-error: #5e0b1a;
 
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -26,7 +27,14 @@
 *::after {
   box-sizing: border-box;
 }
-
+.required { position: relative; }
+.required::after {
+  content: '*';
+  color: var(--color-error);
+  position: absolute;
+  top: 0;
+  left:  2.2 em; 
+}
 html,
 body {
   margin: 0;

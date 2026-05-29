@@ -1,5 +1,7 @@
 <script lang="ts">
     import type { ListingSummary } from '$lib/services/listingService';
+    import { cart } from '$lib/stores/cartStore.svelte';
+
     let { listing }: { listing: ListingSummary } = $props();
 
 </script>
@@ -17,12 +19,15 @@
         <div>
            <p>🟥🟫🟦🟩</p>
         </div>
+        <div>
+            <p>{listing.descriptionPreview}</p>
+        </div>
         <span class="price">{listing.price.toFixed(2)} SEK</span>
         <div class="same-row">
             <small class="seller">Säljs av {listing.sellerUsername}</small>
-            <button class="btn" type="button">🛒</button>
         </div>
     </a>
+      <button class="btn" type="button" onclick={() => cart.addListing(listing)}>🛒</button>
 </article>
 <style>
     .same-row {
