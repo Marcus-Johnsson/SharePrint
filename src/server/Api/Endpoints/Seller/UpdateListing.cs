@@ -24,8 +24,6 @@ public class UpdateListing : IEndpoint
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound);
     }
-
-    // All fields optional. null = absent = keep current.
     private class Request
     {
         public string?  Title        { get; set; }

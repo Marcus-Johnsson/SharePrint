@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SharePrint.Api.Contracts;
 using SharePrint.Api.Endpoints._internal;
 using SharePrint.Domain;
 using SharePrint.Infrastructure.Persistence;
@@ -10,26 +11,43 @@ public class GetMyDownloads : IEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPut("/api/listings/{id}", Handler)
+        app.MapGet("/api/me/downloads", Handler)
             .RequireAuthorization()
             .WithName("GetMyDownloads")
-            .Produces(StatusCodes.Status400BadRequest)
-            .Produces(StatusCodes.Status401Unauthorized)
-            .Produces(StatusCodes.Status403Forbidden)
-            .Produces(StatusCodes.Status404NotFound);
+            .Produces<IReadOnlyList<OrderContracts.DownloadSummary>>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized);
     }
 
-    private async Task<IResult> Handler(
-        UserManager<User> users,
+    private static async Task<IResult> Handler(
         HttpContext context,
-        SharePrintDbContext db)
+        UserManager<User> users,
+        SharePrintDbContext db,
+        CancellationToken ct)
     {
         var user = await users.GetUserAsync(context.User);
-        
+        if (user is null) return Results.Unauthorized();
+
         var downloads = await db.OrderItems
+            .AsNoTracking()
             .Include(i => i.Grant)
             .Where(i => i.DownloadPath && i.Grant != null)
-            
-            
+            .Join(db.Orders,
+                i => i.OrderId,
+                o => o.Id,
+                (i, o) => new { i, o })
+            .Where(x => x.o.BuyerId == user.Id && x.o.Status == OrderStatus.Paid)
+            .Join(db.Listings,
+                x => x.i.ListingId,
+                l => l.Id,
+                (x, l) => new OrderContracts.DownloadSummary(
+                    x.o.Id,
+                    x.i.Id,
+                    l.Title,
+                    x.o.CreatedAt,
+                    x.i.Grant!.DownloadRemaining))
+            .OrderByDescending(d => d.PurchasedAt)
+            .ToListAsync(ct);
+
+        return Results.Ok(downloads);
     }
 }
