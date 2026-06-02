@@ -17,7 +17,15 @@ public class GetCatalog : IEndpoint
             .WithName("GetCatalog")
             .Produces<IReadOnlyList<ListingContracts.ListingSummary>>(StatusCodes.Status200OK);
     }
-
+    public record ListingPage(
+        IReadOnlyList<ListingContracts.ListingSummary> Items,
+        int Page,
+        int PageSize,
+        int TotalCount,
+        int TotalPages,
+        bool HasNextPage,
+        bool HasPreviousPage);
+    
     private static async Task<IResult> Handler(
         SharePrintDbContext db,
         UserManager<User> users,
@@ -27,6 +35,10 @@ public class GetCatalog : IEndpoint
         if (page < 1) page = 1;
         if (pageSize is < 1 or > 100) pageSize = 20;
 
+        var listingCount = db.Listings.Where(l => l.Status == ListingStatus.Active);
+        var totalCount = await listingCount.CountAsync();
+        var totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
+        
         var items = await db.Listings
             .Where(l => l.Status == ListingStatus.Active)
             .OrderByDescending(l => l.CreatedAt)
@@ -49,6 +61,8 @@ public class GetCatalog : IEndpoint
                 listing.PrintAble));
         }
 
-        return TypedResults.Ok(result);
+        return TypedResults.Ok(new ListingPage(
+            result, page, pageSize, totalCount, totalPages,
+            page < totalPages, page > 1));
     }
 }

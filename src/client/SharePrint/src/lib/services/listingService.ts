@@ -40,9 +40,19 @@ export type ListingDetail = {
     printAble: boolean
 };
 
+export type ListingPage = {
+    items: ListingSummary[];
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+};
+
 export const listingService = {
-    catalog: (page = 1, pageSize = 20) =>
-        api.get<ListingSummary[]>(`listings/${page}/${pageSize}`),
+    catalog: (page: number, pageSize: number) =>
+    api.get<ListingPage>(`listings/${page}/${pageSize}`),
 
     detail: (id: string) =>
         api.get<ListingDetail>(`listings/${id}`),
