@@ -2,16 +2,8 @@
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
     import { cart } from '$lib/stores/cartStore.svelte';
+    import type { OrderItem } from '$lib/services/orderService'
 
-    type OrderItem = {
-        id: string;
-        listingId: string;
-        listingTitle: string;
-        unitPrice: number;
-        downloadPath: boolean;
-        printPath: boolean;
-        downloadsRemaining: number | null;
-    };
     type Order = {
         id: string;
         status: string;
@@ -31,12 +23,12 @@
         const status = params.get('redirect_status');
 
         if (!piId) {
-            error = 'Missing payment information.';
+            error = 'Betalningsinformation saknas.';
             loading = false;
             return;
         }
         if (status && status !== 'succeeded') {
-            error = `Payment ${status}.`;
+            error = `Betalning ${status}.`;
             loading = false;
             return;
         }
@@ -49,7 +41,7 @@
             body: JSON.stringify({ paymentIntentId: piId })
         });
         if (!confirmRes.ok) {
-            error = `Order confirmation failed (${confirmRes.status}).`;
+            error = `Orderbekräftelse misslyckades (${confirmRes.status}).`;
             loading = false;
             return;
         }
@@ -58,7 +50,7 @@
         // 2. Fetch order details for display.
         const orderRes = await fetch(`/api/orders/${orderId}`, { credentials: 'include' });
         if (!orderRes.ok) {
-            error = `Could not load order (${orderRes.status}).`;
+            error = `Kunde inte hämta ordern (${orderRes.status}).`;
             loading = false;
             return;
         }
@@ -78,53 +70,53 @@
 
 <div class="success">
     {#if loading}
-        <p>Finalizing your order…</p>
+        <p>Slutför din order…</p>
     {:else if error}
-        <h1>Something went wrong</h1>
+        <h1>Något gick fel</h1>
         <p class="err">{error}</p>
-        <button onclick={() => goto('/')}>Back to home</button>
+        <button onclick={() => goto('/')}>Tillbaka till start</button>
     {:else if order}
-        <h1>Thanks for your purchase!</h1>
-        <p>Order <code>{order.id}</code> · Total {order.totalPrice.toFixed(2)} {order.currency}</p>
+        <h1>Tack för ditt köp!</h1>
+        <p>Order <code>{order.id}</code> · Totalt {order.totalPrice.toFixed(2)} {order.currency}</p>
 
         <section>
-            <h2>Downloads</h2>
+            <h2>Nedladdningar</h2>
             {#if order.items.some(i => i.downloadPath)}
                 <ul class="list">
                     {#each order.items.filter(i => i.downloadPath) as item (item.id)}
                         <li>
                             <span class="title">{item.listingTitle}</span>
                             <span class="meta">
-                                {item.downloadsRemaining ?? 0} download{(item.downloadsRemaining ?? 0) === 1 ? '' : 's'} left
+                                {item.downloadsRemaining ?? 0} nedladdning{(item.downloadsRemaining ?? 0) === 1 ? '' : 'ar'} kvar
                             </span>
                             <button
                                 onclick={() => download(item)}
                                 disabled={(item.downloadsRemaining ?? 0) <= 0}
-                            >Download</button>
+                            >Ladda ner</button>
                         </li>
                     {/each}
                 </ul>
             {:else}
-                <p class="muted">No downloads in this order.</p>
+                <p class="muted">Inga nedladdningar i denna order.</p>
             {/if}
         </section>
 
         {#if order.items.some(i => i.printPath)}
             <section>
-                <h2>Print orders</h2>
-                <p class="muted">Print fulfillment is handled separately. We'll contact you when ready.</p>
+                <h2>Utskriftsorder</h2>
+                <p class="muted">Utskrifter hanteras separat. Vi kontaktar dig när de är klara.</p>
                 <ul class="list">
                     {#each order.items.filter(i => i.printPath) as item (item.id)}
                         <li>
                             <span class="title">{item.listingTitle}</span>
-                            <span class="meta">Print</span>
+                            <span class="meta">Utskrift</span>
                         </li>
                     {/each}
                 </ul>
             </section>
         {/if}
 
-        <button class="home" onclick={() => goto('/')}>Back to home</button>
+        <button class="home" onclick={() => goto('/')}>Tillbaka till start</button>
     {/if}
 </div>
 

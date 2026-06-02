@@ -1,19 +1,30 @@
 <script lang="ts">
-  
+    import { orderService } from '$lib/services/orderService';
+    import type { PageProps } from './$types';
+
+    let { data }: PageProps = $props();
+
+    let items = $derived(data.downloads);
+
+  function download(orderId: string, orderItemId: string) {
+    orderService.download(orderId, orderItemId);
+  }
 </script>
 
-<h1>Downloads</h1>
-<p>Files you can download. Counter shows remaining downloads.</p>
+<h1>Nedladdningar</h1>
+<p>Filer du kan ladda ner. Räknaren visar antal kvarvarande nedladdningar.</p>
 
 <ul class="list">
-  {#each items as item (item.id)}
+  {#each items as item}
     <li class="row">
-      <span class="title">{item.title}</span>
-      <span class="count" class:empty={item.remaining === 0}>
-        {item.remaining} left
+      <span class="title">{item.listingTitle}</span>
+      <span class="count" class:empty={item.downloadsRemaining === 0}>
+        {item.downloadsRemaining} kvar
       </span>
-      <button type="button" class="primary" disabled={item.remaining === 0}>Download</button>
-      <button type="button" disabled={item.remaining === 0}>Print</button>
+      <button type="button" class="primary" 
+          onclick={() => download(item.orderId, item.orderItemId)}
+           disabled={item.downloadsRemaining === 0}>
+           Ladda ner</button>
     </li>
   {/each}
 </ul>

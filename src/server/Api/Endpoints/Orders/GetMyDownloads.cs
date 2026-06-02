@@ -28,8 +28,6 @@ public class GetMyDownloads : IEndpoint
         if (user is null) return Results.Unauthorized();
 
         var downloads = await db.OrderItems
-            .AsNoTracking()
-            .Include(i => i.Grant)
             .Where(i => i.DownloadPath && i.Grant != null)
             .Join(db.Orders,
                 i => i.OrderId,
@@ -39,13 +37,14 @@ public class GetMyDownloads : IEndpoint
             .Join(db.Listings,
                 x => x.i.ListingId,
                 l => l.Id,
-                (x, l) => new OrderContracts.DownloadSummary(
-                    x.o.Id,
-                    x.i.Id,
-                    l.Title,
-                    x.o.CreatedAt,
-                    x.i.Grant!.DownloadRemaining))
-            .OrderByDescending(d => d.PurchasedAt)
+                (x, l) => new { x.i, x.o, l })
+            .OrderByDescending(x => x.o.CreatedAt)
+            .Select(x => new OrderContracts.DownloadSummary(
+                x.o.Id,
+                x.i.Id,
+                x.l.Title,
+                x.o.CreatedAt,
+                x.i.Grant!.DownloadRemaining))
             .ToListAsync(ct);
 
         return Results.Ok(downloads);
