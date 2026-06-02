@@ -31,10 +31,9 @@
         <h1>{listing.title}</h1>
         <p class="seller">Säljs av {listing.sellerUsername}</p>
         <p class="price">{listing.price.toFixed(2)} SEK</p>
-        <p> Tags area: 🟩🟦🟫🟥</p>
         <div class="flags">
-            {#if listing.downloadAble}<span class="flag">📥 Download</span>{/if}
-            {#if listing.printAble}<span class="flag">🖨️ Print</span>{/if}
+            {#if listing.downloadAble}<span class="flag">📥 Nedladdning</span>{/if}
+            {#if listing.printAble}<span class="flag">🖨️ Utskrift</span>{/if}
         </div>
         <div class="actions">
               <button class="btn" type="button" onclick={() => cart.addListing(listing)}>🛒</button>

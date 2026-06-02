@@ -2,14 +2,14 @@
   const receipts: { id: string; date: string; total: string }[] = [];
 </script>
 
-<h1>Receipts</h1>
+<h1>Kvitton</h1>
 
 {#if receipts.length === 0}
-  <p>No receipts yet.</p>
+  <p>Inga kvitton än.</p>
 {:else}
   <table class="table">
     <thead>
-      <tr><th>ID</th><th>Date</th><th>Total</th></tr>
+      <tr><th>ID</th><th>Datum</th><th>Summa</th></tr>
     </thead>
     <tbody>
       {#each receipts as r (r.id)}

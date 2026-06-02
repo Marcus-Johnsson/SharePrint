@@ -11,23 +11,23 @@
   }
 </script>
 
-<h1>Register</h1>
+<h1>Registrera</h1>
 
 <form class="form" onsubmit={(e) => e.preventDefault()}>
   <label>
-    Email
+    E-post
     <input type="email" bind:value={email} autocomplete="email" />
   </label>
   <label>
-    username
+    Användarnamn
     <input type="text" bind:value={username} />
   </label>
   <label>
-    Password
+    Lösenord
     <input type="password" bind:value={password} autocomplete="new-password" />
   </label>
-  <button type="submit" class="primary" onclick={handleSubmit}>Create account</button>
-  <p class="alt">Have account? <a href="/login">Sign in</a></p>
+  <button type="submit" class="primary" onclick={handleSubmit}>Skapa konto</button>
+  <p class="alt">Har du redan ett konto? <a href="/login">Logga in</a></p>
 </form>
 
 <style>

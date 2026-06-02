@@ -1,14 +1,14 @@
 <script lang="ts">
   const sections = [
-    { href: '/userPage/create-listing', label: 'Create listing' },
-    { href: '/userPage/account', label: 'Account information' },
-    { href: '/userPage/receipts', label: 'Receipts' },
-    { href: '/userPage/downloads', label: 'Downloads' }
+    { href: '/userPage/create-listing', label: 'Skapa annons' },
+    { href: '/userPage/account', label: 'Kontoinformation' },
+    { href: '/userPage/receipts', label: 'Kvitton' },
+    { href: '/userPage/downloads', label: 'Nedladdningar' }
   ];
 </script>
 
-<h1>User page</h1>
-<p>Pick a section.</p>
+<h1>Mina sidor</h1>
+<p>Välj en sektion.</p>
 <ul class="list">
   {#each sections as s (s.href)}
     <li><a href={s.href}>{s.label}</a></li>

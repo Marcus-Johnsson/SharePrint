@@ -6,7 +6,7 @@
 
     let stripe: Stripe | null = null;
     let card: StripeCardElement | null = null;
-    let cardMount: HTMLDivElement;
+    let cardMount = $state<HTMLDivElement | undefined>();
 
     let status = $state<'idle' | 'loading' | 'success' | 'error'>('idle');
     let errorMsg = $state<string | null>(null);

@@ -2,5 +2,5 @@
   let { data } = $props();
 </script>
 
-<h1>File Marketplace</h1>
-<p>API health: {data.health.status}</p>
+<h1>Filmarknad</h1>
+<p>API-status: {data.health.status}</p>

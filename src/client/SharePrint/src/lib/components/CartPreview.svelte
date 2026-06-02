@@ -15,15 +15,15 @@
 </script>
 
 {#if showCart}
-<div class="cart-preview" role="dialog" aria-label="Cart preview">
+<div class="cart-preview" role="dialog" aria-label="Förhandsvisning av varukorg">
     <header class="head">
-        <h2>Your Cart</h2>
-        <button class="icon-btn" onclick={close} aria-label="Close cart">×</button>
+        <h2>Din varukorg</h2>
+        <button class="icon-btn" onclick={close} aria-label="Stäng varukorg">×</button>
     </header>
 
     <div class="items">
         {#if cart.products.length === 0}
-            <p class="empty">Your cart is empty.</p>
+            <p class="empty">Din varukorg är tom.</p>
         {:else}
             {#each cart.products as cartItem (cartItem.product.id)}
                 {@const both = cartItem.product.downloadAble && cartItem.product.printAble}
@@ -34,25 +34,25 @@
                 >
                     <span class="title">{cartItem.product.title}</span>
                     <span class="unit">{cart.unitPrice(cartItem).toFixed(2)} SEK</span>
-                    <button class="remove-btn" aria-label="Remove item"
+                    <button class="remove-btn" aria-label="Ta bort produkt"
                             onclick={() => cart.remove(cartItem.product.id)}>🗑️</button>
 
                     {#if both}
-                        <div class="path-picker" role="radiogroup" aria-label="Choose format">
+                        <div class="path-picker" role="radiogroup" aria-label="Välj format">
                             <button
                                 class="path-btn"
                                 class:active={cartItem.selectedOption === 'download'}
                                 onclick={() => cart.setOption(cartItem.product.id, 'download')}
-                            >Download</button>
+                            >Nedladdning</button>
                             <button
                                 class="path-btn"
                                 class:active={cartItem.selectedOption === 'print'}
                                 onclick={() => cart.setOption(cartItem.product.id, 'print')}
-                            >Print</button>
+                            >Utskrift</button>
                         </div>
                     {:else}
                         <span class="path-label">
-                            {cartItem.product.printAble ? 'Print only' : 'Download only'}
+                            {cartItem.product.printAble ? 'Endast utskrift' : 'Endast nedladdning'}
                         </span>
                     {/if}
                 </article>
@@ -62,15 +62,15 @@
 
     <footer class="foot">
         <div class="total">
-            <span>Total</span>
+            <span>Totalt</span>
             <strong>{cart.total.toFixed(2)} SEK</strong>
         </div>
         <button
             class="checkout"
             onclick={proceedToCheckout}
             disabled={cart.products.length === 0 || !cart.allOptionsChosen}
-            title={!cart.allOptionsChosen ? 'Choose Download or Print for each item' : ''}
-        >Checkout</button>
+            title={!cart.allOptionsChosen ? 'Välj Nedladdning eller Utskrift för varje produkt' : ''}
+        >Till kassan</button>
     </footer>
 </div>
 {/if}

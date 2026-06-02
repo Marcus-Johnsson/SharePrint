@@ -2,17 +2,17 @@
   import { auth, isSeller } from '$lib/services/auth.svelte';
   import { ui } from '$lib/services/auth.svelte';
 
-  let sellerRole = $state(isSeller.call(auth.Roles));
+  let sellerRole = $derived(isSeller());
 </script>
 
-<h1>Account information</h1>
+<h1>Kontoinformation</h1>
 
 <dl class="info">
-  <dt>Display name</dt>
+  <dt>Visningsnamn</dt>
   <dd>{auth.Username ?? '—'}</dd>
-  <dt>Email</dt>
+  <dt>E-post</dt>
   <dd>{auth.Email ?? '—'}</dd>
-  <dt>Veriferad användare</dt>
+  <dt>Verifierad användare</dt>
   <dd>{sellerRole ?? '—'} 
     {#if sellerRole === false}
       <button class="verified" onclick={() => ui.showVerifyPopup = true}>verifiera</button>
