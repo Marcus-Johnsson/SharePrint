@@ -3,6 +3,7 @@
   import { cart } from '$lib/stores/cartStore.svelte';
   import { loadStripe, type Stripe, type StripeElements } from '@stripe/stripe-js';
   import { PUBLIC_STRIPE_KEY } from '$env/static/public';
+  import { auth } from '$lib/services/auth.svelte';
 
   let stripe: Stripe | null = null;
   let elements: StripeElements | null = null;
@@ -12,7 +13,7 @@
   onMount(async () => {
     if (cart.products.length === 0) return;
     if (!cart.allOptionsChosen) {
-      message = 'Pick Download or Print for each item before checkout.';
+      message = 'Välj Nedladdning eller Utskrift för varje produkt innan du går vidare till kassan.';
       return;
     }
 
@@ -31,7 +32,7 @@
     if (!res.ok) {
       const body = await res.text();
       console.error('create-intent failed', res.status, body);
-      message = `Failed to start checkout (${res.status}): ${body || res.statusText}`;
+      message = `Kunde inte starta kassan (${res.status}): ${body || res.statusText}`;
       return;
     }
     const { clientSecret } = await res.json();
@@ -51,23 +52,23 @@
       elements,
       confirmParams: { return_url: `${window.location.origin}/checkout/success` }
     });
-    if (error) message = error.message ?? 'Payment failed';
+    if (error) message = error.message ?? 'Betalning misslyckades';
     processing = false;
   }
 </script>
 
-<h1>Checkout</h1>
+<h1>Kassa</h1>
 
-<div class="cart-preview" aria-label="Order summary">
+<div class="cart-preview" aria-label="Ordersammanfattning">
     <div class="items">
         {#if cart.products.length === 0}
-            <p class="empty">Your cart is empty.</p>
+            <p class="empty">Din varukorg är tom.</p>
         {:else}
             {#each cart.products as cartItem (cartItem.product.id)}
                 <article class="item" title={cartItem.product.title}>
                     <span class="title">
                         {cartItem.product.title}
-                        <small class="path">({cartItem.selectedOption ?? '— not chosen —'})</small>
+                        <small class="path">({cartItem.selectedOption ?? '— ej valt —'})</small>
                     </span>
                     <span class="line-total">{cart.unitPrice(cartItem).toFixed(2)} SEK</span>
                 </article>
@@ -76,28 +77,32 @@
     </div>
     <form id="payment-form" onsubmit={handleSubmit}>
       <div id="payment-element">
-        <!--Stripe.js injects the Payment Element-->
+        <!--Stripe.js injicerar betalningselementet-->
       </div>
-      <button id="submit" disabled={processing || cart.products.length === 0}>
-        <span id="button-text">{processing ? 'Processing…' : 'Pay now'}</span>
-      </button>
-      {#if message}
-        <div id="payment-message">{message}</div>
-      {/if}
-    </form>
-    <footer class="foot">
+
+      <footer class="foot">
         <div class="total">
-            <span>Total</span>
-            <strong>{cart.total.toFixed(2)} SEK</strong>
+          <span>Totalt</span>
+          <strong>{cart.total.toFixed(2)} SEK</strong>
         </div>
-    </footer>
+
+        {#if auth.isAuthenticated}
+          <button id="submit" class="buy-btn" disabled={processing || cart.products.length === 0}>
+            <span id="button-text">{processing ? 'Behandlar…' : 'Köp'}</span>
+          </button>
+        {:else}
+          <div class="auth-msg">
+            <p class="message">Du behöver <a href="/login">logga in</a> för att avsluta köpet.</p>
+            <p class="message">Har du inget konto? Registera <a href="/register">här!</a></p>
+          </div>
+        {/if}
+      </footer>
+    </form>
 </div>
 
 
 <style>
 .cart-preview {
- 
-    right: var(--space-4);
     width: 420px;
     max-height: calc(100vh - 90px);
     display: flex;
@@ -106,9 +111,20 @@
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-menu), 0 12px 32px rgba(37, 52, 63, 0.03);
-    z-index: 1000;
     overflow: hidden;
     animation: slide-in 180ms ease-out;
+}
+
+#payment-form {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+#payment-element {
+    padding: var(--space-3) var(--space-4);
+    overflow-y: auto;
 }
 
 @keyframes slide-in {
@@ -162,12 +178,6 @@
     white-space: nowrap;
     min-width: 0;
 }
-.unit {
-    color: var(--color-muted);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    font-size: 0.8rem;
-}
 
 .line-total {
     font-weight: 600;
@@ -180,12 +190,16 @@
 }
 
 .foot {
+    margin-top: auto;
+    position: sticky;
+    bottom: 0;
     border-top: 1px solid var(--color-border);
     padding: var(--space-3) var(--space-4);
     background: var(--color-bg);
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
+    z-index: 1;
 }
 .total {
     display: flex;
@@ -196,5 +210,38 @@
 .total strong {
     font-size: 1.05rem;
     color: var(--color-text);
+}
+.message {
+    font-size: 0.9rem;
+    color: var(--color-muted);
+    margin: 0;
+}
+.auth-msg {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.buy-btn {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: var(--color-accent, #2563eb);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 120ms ease, transform 80ms ease;
+}
+.buy-btn:hover:not(:disabled) {
+    background: var(--color-accent-hover, #1d4ed8);
+}
+.buy-btn:active:not(:disabled) {
+    transform: translateY(1px);
+}
+.buy-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 </style>

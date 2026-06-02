@@ -7,16 +7,16 @@
   type DropItem = { href: string; label: string };
 
   const marketItems: DropItem[] = [
-    { href: '/market', label: 'Catalog' },
-    { href: '/market/featured', label: 'Featured' },
+    { href: '/market', label: 'Katalog' },
+    { href: '/market/featured', label: 'Utvalda' },
     { href: '/market/new', label: 'Nya produkter' },
     { href: '/market/popular', label: 'Populära' }
   ];
 
   const userItems: DropItem[] = [
     { href: '/userPage', label: 'Mina sidor' },
-    { href: '/userPage/create-listing', label: 'Skapa en försälj' },
-    { href: '/userPage/account', label: 'Konto information' },
+    { href: '/userPage/create-listing', label: 'Skapa annons' },
+    { href: '/userPage/account', label: 'Kontoinformation' },
     { href: '/userPage/receipts', label: 'Kvitton' },
     { href: '/userPage/downloads', label: 'Mina nedladdningar' }
   ];
@@ -58,7 +58,7 @@
   <div class="links">
     <div class="dropdown">
       <button class="trigger" onclick={() => toggle('market')} aria-expanded={openMenu === 'market'}>
-        Market <span class="caret">{openMenu === 'market' ? '^' : 'v'}</span>
+        Marknad <span class="caret">{openMenu === 'market' ? '^' : 'v'}</span>
       </button>
       {#if openMenu === 'market'}
         <ul class="menu">
@@ -69,35 +69,41 @@
       {/if}
     </div>
   </div>
-  <div class="userData">
-    {#if auth.isAuthenticated}
-      <span>Auth: {auth.isAuthenticated} | Username: {auth.Username ?? 'ingen data'} | Email: {auth.Email}</span>
-    {/if}
-  </div>
   {#if auth.isAuthenticated}
-  <div class="dropdown">
-    <button class="trigger" onclick={() => toggle('user')} aria-expanded={openMenu === 'user'}>
-      User <span class="caret">{openMenu === 'user' ? '^' : 'v'}</span>
-    </button>
-    {#if openMenu === 'user'}
-    <ul class="menu">
-      {#each userItems as item (item.href)}
-      <li><a href={item.href}>{item.label}</a></li>
-      {/each}
-      <li><button onclick={logout}>logga ut</button></li>
-    </ul>
-    {/if}
-  </div>
-  
+    <div class="dropdown user-dropdown">
+      <button class="trigger user-trigger"
+              onclick={() => toggle('user')}
+              aria-expanded={openMenu === 'user'}
+              aria-haspopup="menu">
+        <span class="avatar" aria-hidden="true">
+          {auth.Username?.[0]?.toUpperCase() ?? '?'}
+        </span>
+        <span class="username">{auth.Username ?? 'Konto'}</span>
+        <span class="caret">{openMenu === 'user' ? '^' : 'v'}</span>
+      </button>
+      {#if openMenu === 'user'}
+        <ul class="menu" role="menu">
+          {#each userItems as item (item.href)}
+            <li role="none">
+              <a role="menuitem" href={item.href}>{item.label}</a>
+            </li>
+          {/each}
+          <li class="separator" role="separator"></li>
+          <li role="none">
+            <button class="menu-action" role="menuitem" onclick={logout}>
+              Logga ut
+            </button>
+          </li>
+        </ul>
+      {/if}
+    </div>
   {:else}
-    <a class="cart" href="/login" aria-label="Login">
-    Logga in
-  </a>
-    {/if}
- 
+    <a class="login-link" href="/login">Logga in</a>
+  {/if}
+
     <div class="dropdown">
-      <button onclick={() => toggle('cart')} class="cart" aria-label="Cart">
-        Cart
+      <button onclick={() => toggle('cart')} class="cart" aria-label="Varukorg">
+        Varukorg
         <span class="badge">{cartItemCount}</span>
       </button>
       <CartPreview showCart={openMenu === 'cart'} onClose={close}/>
@@ -183,5 +189,57 @@
     background: var(--color-accent);
     color: #fff;
     border-radius: 999px;
+  }
+  .user-dropdown {
+    margin-left: auto;
+  }
+  .user-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  .username {
+    font-weight: 500;
+  }
+  .menu .separator {
+    height: 1px;
+    background: var(--color-border);
+    margin: var(--space-1) 0;
+    list-style: none;
+  }
+  .menu-action {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: var(--space-2) 0.9rem;
+    color: var(--color-text);
+    cursor: pointer;
+    font: inherit;
+  }
+  .menu-action:hover {
+    background: var(--color-bg);
+    color: var(--color-accent);
+  }
+  .login-link {
+    text-decoration: none;
+    color: var(--color-text);
+    padding: 0.4rem 0.7rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+  .login-link:hover {
+    background: var(--color-bg);
   }
 </style>
