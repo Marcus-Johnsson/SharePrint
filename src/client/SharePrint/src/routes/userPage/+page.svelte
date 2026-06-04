@@ -1,6 +1,7 @@
 <script lang="ts">
   const sections = [
     { href: '/userPage/create-listing', label: 'Skapa annons' },
+    { href: '/userPage/listings', label: 'Dina annonser' },
     { href: '/userPage/account', label: 'Kontoinformation' },
     { href: '/userPage/receipts', label: 'Kvitton' },
     { href: '/userPage/downloads', label: 'Nedladdningar' }

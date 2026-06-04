@@ -3,16 +3,16 @@
     import { cart } from '$lib/stores/cartStore.svelte';
     import { auth } from '$lib/services/auth.svelte';
 
-    let { listing, preview = false }:
-        { listing: ListingSummary, preview?: boolean } = $props();
+    let { listing, href, showBuy = true }:
+    { listing: ListingSummary, href?: string, showBuy?: boolean } = $props();
 
     const isOwnListing = $derived(listing.sellerUsername === auth.Username);
 </script>
 
 <article class="card">
-    <svelte:element this={preview ? 'div' : 'a'}
-        href={preview ? undefined : `/market/${listing.id}`}
-        data-sveltekit-preload-data={preview ? undefined : 'hover'}>
+    <svelte:element this={href ? 'a' : 'div'}
+        href={href ? href : undefined}
+        data-sveltekit-preload-data={href ? 'hover' : undefined}>
         <div class="same-row">
             <h3>{listing.title}</h3>
             <div class="flags">
@@ -29,7 +29,7 @@
             <small class="seller">Säljs av <span class="sellerName">{listing.sellerUsername}</span></small>
         </div>
     </svelte:element>
-    {#if !preview}
+    {#if showBuy}
         <button class="btn" type="button"
             disabled={isOwnListing}
             onclick={() => cart.addListing(listing)}>🛒</button>

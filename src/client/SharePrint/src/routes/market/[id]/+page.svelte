@@ -29,7 +29,7 @@
     </div>
     <section class="info">
         <h1>{listing.title}</h1>
-        <p class="seller">Säljs av {listing.sellerUsername}</p>
+        <p class="seller">Säljs av <span class="username">{listing.sellerUsername}</span></p>
         <p class="price">{listing.price.toFixed(2)} SEK</p>
         <div class="flags">
             {#if listing.downloadAble}<span class="flag">📥 Nedladdning</span>{/if}
@@ -43,6 +43,10 @@
 </article>
 
 <style>
+    .username {
+        font-weight: 500;
+        color: var(--color-accent);
+    }
     .description {
       margin-top: var(--space-4);
       border:solid 1px var(--color-border);
