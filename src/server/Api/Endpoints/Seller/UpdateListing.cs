@@ -31,8 +31,9 @@ public class UpdateListing : IEndpoint
         public decimal? Price        { get; set; }
         public bool?    DownloadAble { get; set; }
         public bool?    PrintAble    { get; set; }
-        public IFormFile?           Thumbnail     { get; set; }
-        public IFormFileCollection? GalleryImages { get; set; }
+        public IFormFile?           Thumbnail         { get; set; }
+        public IFormFileCollection? GalleryImages     { get; set; }
+        public List<Guid>?          RemovedGalleryIds { get; set; }
     }
 
     private static async Task<IResult> Handler(
@@ -73,27 +74,32 @@ public class UpdateListing : IEndpoint
         listing.DownloadAble = newDownloadAble;
         listing.PrintAble    = newPrintAble;
 
-        // Pictures — null = skip
-        var replaceThumb   = req.Thumbnail is not null && req.Thumbnail.Length > 0;
-        var galleryFiles   = req.GalleryImages?.GetFiles("galleryImages") ?? [];
-        var replaceGallery = galleryFiles.Count > 0;
+        // Pictures — null/empty = skip
+        var replaceThumb = req.Thumbnail is not null && req.Thumbnail.Length > 0;
+        var galleryFiles = req.GalleryImages?.GetFiles("galleryImages") ?? [];
+        var removedIds   = req.RemovedGalleryIds ?? [];
 
         if (replaceThumb && !await ValidateImageAsync(req.Thumbnail!))
             return TypedResults.Problem("Thumbnail invalid (mime/size/magic).", statusCode: 400);
-        if (replaceGallery)
-        {
-            if (galleryFiles.Count > 5)
-                return TypedResults.Problem("Gallery must contain 1 to 5 images.", statusCode: 400);
-            foreach (var img in galleryFiles)
-                if (!await ValidateImageAsync(img))
-                    return TypedResults.Problem("Gallery image invalid (mime/size/magic).", statusCode: 400);
-        }
 
-        var oldThumbKey   = listing.MarketPictureKey;
-        var oldGalleryKeys = listing.GalleryImages.Select(g => g.StorageKey).ToList();
-        var newKeys        = new List<string>();
-        string? newThumbKey = null;
-        var newGalleryKeys  = new List<string>();
+        foreach (var img in galleryFiles)
+            if (!await ValidateImageAsync(img))
+                return TypedResults.Problem("Gallery image invalid (mime/size/magic).", statusCode: 400);
+
+        // Verify removed ids belong to this listing
+        var toRemove = listing.GalleryImages.Where(g => removedIds.Contains(g.Id)).ToList();
+        if (toRemove.Count != removedIds.Count)
+            return TypedResults.Problem("Removed gallery id not found on listing.", statusCode: 400);
+
+        var finalCount = listing.GalleryImages.Count - toRemove.Count + galleryFiles.Count;
+        if (finalCount is < 1 or > 5)
+            return TypedResults.Problem("Gallery must contain 1 to 5 images.", statusCode: 400);
+
+        var oldThumbKey       = listing.MarketPictureKey;
+        var removedKeys       = toRemove.Select(g => g.StorageKey).ToList();
+        var newKeys           = new List<string>();
+        string? newThumbKey   = null;
+        var newGalleryKeys    = new List<string>();
 
         try
         {
@@ -103,36 +109,38 @@ public class UpdateListing : IEndpoint
                 newThumbKey = await pictureStorage.SaveAsync(s, req.Thumbnail.ContentType);
                 newKeys.Add(newThumbKey);
             }
-            if (replaceGallery)
+            foreach (var img in galleryFiles)
             {
-                foreach (var img in galleryFiles)
-                {
-                    await using var s = img.OpenReadStream();
-                    var key = await pictureStorage.SaveAsync(s, img.ContentType);
-                    newKeys.Add(key);
-                    newGalleryKeys.Add(key);
-                }
+                await using var s = img.OpenReadStream();
+                var key = await pictureStorage.SaveAsync(s, img.ContentType);
+                newKeys.Add(key);
+                newGalleryKeys.Add(key);
             }
 
             if (replaceThumb) listing.MarketPictureKey = newThumbKey!;
-            if (replaceGallery)
+
+            if (toRemove.Count > 0)
+                db.ListingImages.RemoveRange(toRemove);
+
+            if (newGalleryKeys.Count > 0)
             {
-                db.ListingImages.RemoveRange(listing.GalleryImages);
+                var nextOrder = listing.GalleryImages.Count == 0
+                    ? 0
+                    : listing.GalleryImages.Where(g => !removedIds.Contains(g.Id)).Max(g => g.Order) + 1;
                 var newRows = newGalleryKeys
-                    .Select((k, i) => new ListingImage { ListingId = listing.Id, StorageKey = k, Order = i })
+                    .Select((k, i) => new ListingImage { ListingId = listing.Id, StorageKey = k, Order = nextOrder + i })
                     .ToList();
                 db.ListingImages.AddRange(newRows);
-                listing.GalleryImages = newRows;
             }
 
             await db.SaveChangesAsync();
 
             if (replaceThumb && oldThumbKey != "")
                 try { await pictureStorage.DeleteAsync(oldThumbKey); } catch { }
-            if (replaceGallery)
-                foreach (var k in oldGalleryKeys)
-                    try { await pictureStorage.DeleteAsync(k); } catch { }
+            foreach (var k in removedKeys)
+                try { await pictureStorage.DeleteAsync(k); } catch { }
 
+            await db.Entry(listing).Collection(l => l.GalleryImages).LoadAsync();
             return TypedResults.Ok(ListingEndpoints.ToDetail(listing, user.UserName ?? "Unknown"));
         }
         catch
