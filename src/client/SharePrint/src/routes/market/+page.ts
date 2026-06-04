@@ -9,7 +9,7 @@ export const load = async (event) => {
 
         const p = event.url.searchParams;
         const page = Math.max(1, parseInt(p.get('page') ?? '1', 10) || 1);
-        const pageSize = Math.min(100, Math.max(1, parseInt(p.get('pageSize') ?? '20', 10) || 20));
+        const pageSize = Math.min(100, Math.max(1, parseInt(p.get('pageSize') ?? '5', 10) || 5));
 
         const result = unwrap(await listingService.catalog(page, pageSize));
   
