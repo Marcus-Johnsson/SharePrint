@@ -1,5 +1,5 @@
 import { api, type AppError } from '$lib/services/apiService';
-import { auth } from './auth.svelte';
+import { auth } from '$lib/stores/auth.svelte';
 
 export interface MeResponse {
     email: string;

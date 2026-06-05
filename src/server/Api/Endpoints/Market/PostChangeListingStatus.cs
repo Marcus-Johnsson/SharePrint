@@ -36,7 +36,7 @@ public class PostChangeListingStatus : IEndpoint
         var listing = await db.Listings.FindAsync(id);
         if (listing is null) return TypedResults.NotFound();
 
-        var user = (await users.GetUserAsync(context.User))!;
+        var user = await users.GetUserAsync(context.User);
         if (listing.SellerId != user.Id) return TypedResults.Forbid();
 
         listing.Status = newStatus;

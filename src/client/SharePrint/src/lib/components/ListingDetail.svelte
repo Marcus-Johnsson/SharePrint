@@ -4,7 +4,10 @@ import {
     listingService,
     type ListingDetail,
     type GalleryItem,
-    type PendingPicture
+    type PendingPicture,
+
+    type DescriptionPicutre
+
 } from '$lib/services/listingService';
 import ListingCard from '$lib/components/ListingCard.svelte';
 
@@ -21,7 +24,9 @@ let price = $state<number>();
 let description = $state('');
 let downloadAble = $state(false);
 let printAble = $state(false);
-let status = $state<string>('Active');
+let createdAt = $state('');
+let lastUpdate = $state('');
+let status = $state< 'Active' | 'Unlisted' | 'New'>('New'); // idea is New is only when creating, hence we can hide field when creating
 
 let thumbnailUrl = $state<string | null>(null);
 let thumbnailFile = $state<File | null>(null);
@@ -32,7 +37,6 @@ let thumbnailPreview = $derived(
 let file = $state<File | null>(null);
 
 let gallery = $state<GalleryItem[]>([]);
-let removedIds = $state<Set<string>>(new Set());
 
 let saving = $state(false);
 
@@ -40,13 +44,15 @@ const MAX_WORDS = 30;
 const MAX_CHARS = 200;
 
 let preViewDescription = $derived.by(() => {
-    const words = description.trim().split(/\s+/);
+    const desc = description ?? '';
+    const words = desc.trim().split(/\s+/);
     let out = words.length > MAX_WORDS
         ? words.slice(0, MAX_WORDS).join(' ')
-        : description;
+        : desc;
     if (out.length > MAX_CHARS) out = out.slice(0, MAX_CHARS).trimEnd();
-    return out.length < description.length ? out + '…' : out;
+    return out.length < desc.length ? out + '…' : out;
 });
+let oldStatus = $state<'Active' | 'Unlisted'>('Active');
 
 const isEdit = $derived(listingId !== null);
 
@@ -54,14 +60,17 @@ onMount(async () => {
     if (!listingId) return;
     try {
         const listing = await listingService.detail(listingId) as ListingDetail;
-        title = listing.title;
-        description = listing.description;
+        title = listing.title ?? '';
+        description = listing.description ?? '';
         price = listing.price;
         thumbnailUrl = listing.marketPictureLocation;
         downloadAble = listing.downloadAble;
         printAble = listing.printAble;
         status = listing.status;
+        oldStatus = listing.status;
         gallery = listing.descriptionPictures.map(p => ({ kind: 'saved', data: p }));
+        createdAt = (listing.createdAt);
+        lastUpdate = (listing.lastUpdateAt);
     } catch (err) {
         console.error('Error fetching listing details:', err);
     }
@@ -91,12 +100,7 @@ function addGalleryFiles(e: Event) {
 
 function removeGalleryAt(index: number) {
     const item = gallery[index];
-    if (item.kind === 'saved') {
-        removedIds.add(item.data.id);
-        removedIds = new Set(removedIds);
-    } else {
-        URL.revokeObjectURL(item.data.previewUrl);
-    }
+    if (item.kind === 'pending') URL.revokeObjectURL(item.data.previewUrl);
     gallery = gallery.filter((_, i) => i !== index);
 }
 
@@ -137,7 +141,13 @@ async function submitCreate() {
 }
 
 async function submitEdit(id: string) {
-    const pending = gallery
+    if (price === undefined) throw new Error('Price required');
+
+    const keptGalleryIds = gallery
+        .filter((g): g is { kind: 'saved', data: DescriptionPicutre } => g.kind === 'saved')
+        .map(g => g.data.id);
+
+    const newGalleryImages = gallery
         .filter((g): g is { kind: 'pending', data: PendingPicture } => g.kind === 'pending')
         .map(g => g.data.file);
 
@@ -148,14 +158,19 @@ async function submitEdit(id: string) {
         downloadAble,
         printAble,
         thumbnail: thumbnailFile ?? undefined,
-        galleryImages: pending,
-        removedGalleryIds: [...removedIds],
+        keptGalleryIds,
+        newGalleryImages,
     });
-
-    if (status === 'Unlisted') {
-        await listingService.unlist(id);
+    
+    if (oldStatus !== status && (status === 'Active' || status === 'Unlisted')) {
+        const response = await listingService.status(id, status);
+        if (response && typeof response === 'object' && 'code' in response) {
+            console.error('Failed to update status:', response);
+        } else {
+            oldStatus = status;
+        }
     }
-    removedIds = new Set();
+
     thumbnailFile = null;
     gallery = gallery.filter(g => g.kind === 'saved');
     onSaved?.(id);
@@ -240,8 +255,10 @@ let previewListing = $derived({
             Utskriftsbar
         </label>
 
-        {#if isEdit}
+        {#if isEdit && status !== 'New'}
             <label>
+                <span>Gjordes: {createdAt}</span>
+                <span>Senaste ändringen: {lastUpdate}</span>
                 <span>Status</span>
                 <select bind:value={status}>
                     <option value="Active">Aktiv</option>

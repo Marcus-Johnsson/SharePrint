@@ -50,7 +50,7 @@ public static class DependencyInjection
                     new LocalDiskPictureStorage(cfg["Storage:PicturesPath"] ?? "./data/pictures"));
                 break;
             default:
-                throw new InvalidOperationException($"Unknown Storage:Provider '{provider}'. Expected 'Local' or 'S3'.");
+                throw new InvalidOperationException($"Unknown Storage:Provider '{provider}'. Expected 'Local' or 'Cloud'.");
         }
     }
 

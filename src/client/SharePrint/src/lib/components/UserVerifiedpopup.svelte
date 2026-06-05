@@ -2,7 +2,7 @@
     import { onMount, onDestroy } from 'svelte';
     import { loadStripe, type Stripe, type StripeCardElement } from '@stripe/stripe-js';
     import { PUBLIC_STRIPE_KEY, PUBLIC_API_URL } from '$env/static/public';
-    import { auth, isSeller, ui } from '$lib/services/auth.svelte';
+        import { auth, isSeller, ui} from '$lib/stores/auth.svelte';
 
     let stripe: Stripe | null = null;
     let card: StripeCardElement | null = null;

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using SharePrint.Api.Contracts;
 using SharePrint.Api.Endpoints._internal;
 using SharePrint.Application.Abstractions;
-using SharePrint.Application.Listings;
 using SharePrint.Domain;
 using SharePrint.Infrastructure.Persistence;
 
@@ -56,10 +55,10 @@ public class ListingEndpoints : IEndpoint
         var gallery = req.GalleryImages?.GetFiles("galleryImages") ?? [];
         if (gallery.Count is < 1 or > 5)
             return TypedResults.Problem("Gallery must contain 1 to 5 images.", statusCode: 400);
-        if (!await ValidateImageAsync(req.Thumbnail))
+        if (!await ListingPictures.ValidateImageAsync(req.Thumbnail))
             return TypedResults.Problem("Thumbnail invalid (mime/size/magic).", statusCode: 400);
         foreach (var img in gallery)
-            if (!await ValidateImageAsync(img))
+            if (!await ListingPictures.ValidateImageAsync(img))
                 return TypedResults.Problem("Gallery image invalid (mime/size/magic).", statusCode: 400);
 
         var user = (await users.GetUserAsync(context.User))!;
@@ -115,21 +114,11 @@ public class ListingEndpoints : IEndpoint
         }
     }
 
-    private static async Task<bool> ValidateImageAsync(IFormFile file)
-    {
-        if (file.Length > PictureValidator.DefaultMaxBytes) return false;
-        var buffer = new byte[Math.Min(file.Length, 16)];
-        await using var s = file.OpenReadStream();
-        var read = await s.ReadAsync(buffer);
-        return PictureValidator.IsAllowedImage(buffer.AsSpan(0, read), file.ContentType,
-            PictureValidator.DefaultMaxBytes, out _);
-    }
-
     internal static ListingContracts.ListingDetail ToDetail(Listing l, string sellerUsername) =>
-        new(l.Id, l.Title, l.Description, l.Price,
-            $"/api/pictures/{l.MarketPictureKey}",
+        new(l.Id, l.Title, l.Description, l.Price, 
+            ListingPictures.PictureUrl(l.MarketPictureKey),
             l.GalleryImages.OrderBy(g => g.Order)
-                .Select(g => new ListingContracts.DescriptionPicture(g.Id, $"/api/pictures/{g.StorageKey}"))
+                .Select(g => new ListingContracts.DescriptionPicture(g.Id, ListingPictures.PictureUrl(g.StorageKey)))
                 .ToList(),
-            sellerUsername, l.Status.ToString(), l.DownloadAble, l.PrintAble);
+            sellerUsername, l.Status.ToString(), l.DownloadAble, l.PrintAble, l.CreatedAt.ToString(), l.LastUpdatedAt.ToString());
 }

@@ -33,20 +33,22 @@ export type ListingDetail = {
     marketPictureLocation: string,
     descriptionPictures: DescriptionPicutre[],
     sellerUsername: string,
-    status: string,
+    status: 'Active' | 'Unlisted',
     downloadAble: boolean,
-    printAble: boolean
+    printAble: boolean,
+    createdAt: string,
+    lastUpdateAt: string
 };
 
 export type ListingUpdate = {
-    title?: string,
-    description?: string,
-    price?: number,
-    downloadAble?: boolean,
-    printAble?: boolean,
-    thumbnail?: File,
-    galleryImages?: File[],
-    removedGalleryIds?: string[]
+    title: string,
+    description: string,
+    price: number,
+    downloadAble: boolean,
+    printAble: boolean,
+    thumbnail?: File,           // omit = keep
+    keptGalleryIds: string[],   // existing IDs user did NOT remove
+    newGalleryImages: File[]    // uploads
 };
 
 export type ListingPage = {
@@ -72,19 +74,19 @@ export const listingService = {
     create: (form: FormData) =>
         api.upload<ListingDetail>('listings', form, 'POST'),
 
-    update: (id: string, patch: ListingUpdate) => {
+    update: (id: string, payload: ListingUpdate) => {
         const form = new FormData();
-        if (patch.title        !== undefined) form.append('title', patch.title);
-        if (patch.description  !== undefined) form.append('description', patch.description);
-        if (patch.price        !== undefined) form.append('price', String(patch.price));
-        if (patch.downloadAble !== undefined) form.append('downloadAble', String(patch.downloadAble));
-        if (patch.printAble    !== undefined) form.append('printAble', String(patch.printAble));
-        if (patch.thumbnail)                  form.append('thumbnail', patch.thumbnail);
-        for (const f of patch.galleryImages    ?? []) form.append('galleryImages', f);
-        for (const id of patch.removedGalleryIds ?? []) form.append('removedGalleryIds', id);
+        form.append('title', payload.title);
+        form.append('description', payload.description);
+        form.append('price', String(payload.price));
+        form.append('downloadAble', String(payload.downloadAble));
+        form.append('printAble', String(payload.printAble));
+        if (payload.thumbnail) form.append('thumbnail', payload.thumbnail);
+        for (const gid of payload.keptGalleryIds) form.append('keptGalleryIds', gid);
+        for (const f of payload.newGalleryImages) form.append('newGalleryImages', f);
         return api.upload<ListingDetail>(`listings/${id}`, form, 'PUT');
-    },
+},
 
-    unlist: (id: string) =>
-        api.post<unknown, undefined>(`listings/${id}/unlist`, undefined),
+    status: (id: string, status: 'Active' | 'Unlisted') =>
+        api.post<unknown, { status: string }>(`listings/${id}/status`, { status }),
 };

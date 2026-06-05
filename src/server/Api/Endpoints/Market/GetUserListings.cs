@@ -39,12 +39,12 @@ public class GetUserListings : IEndpoint
         var user = await users.GetUserAsync(context.User);
         if (user is null) return Results.Unauthorized();    
 
-        var listingCount = db.Listings.Where(l => l.Status == ListingStatus.Active && l.SellerId == user.Id);
+        var listingCount = db.Listings.Where(l => l.SellerId == user.Id);
         var totalCount = await listingCount.CountAsync();
         var totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
         
         var items = await db.Listings
-            .Where(l => l.Status == ListingStatus.Active && l.SellerId == user.Id)
+            .Where(l => l.SellerId == user.Id)
             .OrderByDescending(l => l.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)

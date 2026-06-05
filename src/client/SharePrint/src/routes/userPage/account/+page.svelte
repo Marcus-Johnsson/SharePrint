@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { auth, isSeller } from '$lib/services/auth.svelte';
+  import { auth, isSeller } from '$lib/stores/auth.svelte';
   import { ui } from '$lib/services/auth.svelte';
 
   let sellerRole = $derived(isSeller());

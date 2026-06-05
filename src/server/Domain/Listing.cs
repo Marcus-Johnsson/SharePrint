@@ -55,4 +55,7 @@ public class Listing
     
     public bool PrintAble { get; set; } = false;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    
+    public DateTimeOffset LastUpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+
 }

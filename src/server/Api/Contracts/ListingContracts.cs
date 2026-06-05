@@ -24,6 +24,8 @@ public class ListingContracts
         string SellerUsername,
         string Status,
         bool DownloadAble,
-        bool PrintAble);
+        bool PrintAble,
+        string CreatedAt,
+        string UpdatedAt);
 
 }

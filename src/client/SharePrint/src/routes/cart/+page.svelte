@@ -3,7 +3,8 @@
   import { cart } from '$lib/stores/cartStore.svelte';
   import { loadStripe, type Stripe, type StripeElements } from '@stripe/stripe-js';
   import { PUBLIC_STRIPE_KEY } from '$env/static/public';
-  import { auth } from '$lib/services/auth.svelte';
+  import { auth } from '$lib/stores/auth.svelte';
+
 
   let stripe: Stripe | null = null;
   let elements: StripeElements | null = null;

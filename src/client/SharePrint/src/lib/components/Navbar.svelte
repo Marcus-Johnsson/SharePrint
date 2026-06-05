@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { auth, logout } from '$lib/services/auth.svelte';
+  import { auth, logout} from '$lib/stores/auth.svelte';
   import { cart } from '$lib/stores/cartStore.svelte';
   import CartPreview from "$lib/components/CartPreview.svelte";
 

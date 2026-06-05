@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { ListingSummary } from '$lib/services/listingService';
     import { cart } from '$lib/stores/cartStore.svelte';
-    import { auth } from '$lib/services/auth.svelte';
+    import { auth } from '$lib/stores/auth.svelte';
 
     let { listing, href, showBuy = true }:
     { listing: ListingSummary, href?: string, showBuy?: boolean } = $props();

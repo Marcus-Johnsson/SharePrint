@@ -22,16 +22,21 @@ public class GetProductDetails : IEndpoint
     private static async Task<IResult> Handler(
         [FromRoute] Guid id,
         SharePrintDbContext db,
-        UserManager<User> users)
+        UserManager<User> users,
+        HttpContext context)
     {
         var listing = await db.Listings
             .Include(l => l.GalleryImages)
             .FirstOrDefaultAsync(l => l.Id == id);
 
-        if (listing is null || listing.Status != ListingStatus.Active)
+        if (listing is null)
             return TypedResults.NotFound();
-
-        var seller = await users.FindByIdAsync(listing.SellerId);
-        return TypedResults.Ok(ListingEndpoints.ToDetail(listing, seller?.UserName ?? "unknown"));
+        
+        var user = await users.GetUserAsync(context.User);
+        var isOwner = user is not null && listing.SellerId == user.Id;
+        if (!isOwner && listing.Status == ListingStatus.Unlisted)
+            return TypedResults.NotFound();
+        
+        return TypedResults.Ok(ListingEndpoints.ToDetail(listing, user?.UserName ?? "unknown"));
     }
 }
