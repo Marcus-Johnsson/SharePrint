@@ -37,7 +37,7 @@ export type ListingDetail = {
     downloadAble: boolean,
     printAble: boolean,
     createdAt: string,
-    lastUpdateAt: string
+    updatedAt: string
 };
 
 export type ListingUpdate = {

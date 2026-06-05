@@ -70,7 +70,7 @@ onMount(async () => {
         oldStatus = listing.status;
         gallery = listing.descriptionPictures.map(p => ({ kind: 'saved', data: p }));
         createdAt = (listing.createdAt);
-        lastUpdate = (listing.lastUpdateAt);
+        lastUpdate = (listing.updatedAt);
     } catch (err) {
         console.error('Error fetching listing details:', err);
     }

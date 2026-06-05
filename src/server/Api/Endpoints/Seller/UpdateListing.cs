@@ -57,7 +57,6 @@ public class UpdateListing : IEndpoint
         var user = (await users.GetUserAsync(context.User))!;
         if (listing.SellerId != user.Id) return TypedResults.Forbid();
 
-        // Text + price
         if (string.IsNullOrWhiteSpace(req.Title))
             return TypedResults.Problem("Title required.", statusCode: 400);
         if (req.Price <= 0)
@@ -65,7 +64,6 @@ public class UpdateListing : IEndpoint
         if (!req.DownloadAble && !req.PrintAble)
             return TypedResults.Problem("Minst ett val av köp val", statusCode: 400);
 
-        // Pictures
         var replaceThumb = req.Thumbnail is not null && req.Thumbnail.Length > 0;
         var newGalleryFiles = req.NewGalleryImages?.GetFiles("newGalleryImages") ?? [];
         var keptIds         = req.KeptGalleryIds?.Distinct().ToList() ?? [];

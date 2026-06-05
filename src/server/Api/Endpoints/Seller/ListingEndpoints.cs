@@ -120,5 +120,5 @@ public class ListingEndpoints : IEndpoint
             l.GalleryImages.OrderBy(g => g.Order)
                 .Select(g => new ListingContracts.DescriptionPicture(g.Id, ListingPictures.PictureUrl(g.StorageKey)))
                 .ToList(),
-            sellerUsername, l.Status.ToString(), l.DownloadAble, l.PrintAble, l.CreatedAt.ToString(), l.LastUpdatedAt.ToString());
+            sellerUsername, l.Status.ToString(), l.DownloadAble, l.PrintAble, l.CreatedAt.DateTime.ToString(), l.LastUpdatedAt.DateTime.ToString());
 }
