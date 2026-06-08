@@ -1,6 +1,6 @@
 using SharePrint.Application.Listings;
 
-namespace SharePrint.Api.Endpoints.Seller;
+namespace SharePrint.Api.Services;
 
 internal static class ListingPictures
 {

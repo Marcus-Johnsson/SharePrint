@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SharePrint.Api.Endpoints._internal;
@@ -6,7 +6,7 @@ using SharePrint.Application.Abstractions;
 using SharePrint.Domain;
 using SharePrint.Infrastructure.Persistence;
 
-namespace SharePrint.Api.Endpoints.Seller;
+namespace SharePrint.Api.Endpoints.Listings;
 
 public class DeleteListing : IEndpoint
 {

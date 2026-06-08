@@ -22,8 +22,8 @@ export const ui = new UiState();
 function saveSession(session: Partial<AuthState>) {
     if(browser) {
         const existingSessions = getStoredSession();
-        const updatedSeesion = { ...existingSessions, ...session};
-        localStorage.setItem('user_session', JSON.stringify(updatedSeesion));
+        const updatedSession = { ...existingSessions, ...session};
+        localStorage.setItem('user_session', JSON.stringify(updatedSession));
     }
 }
 
@@ -90,7 +90,7 @@ export const logout = async () => {
         const response = await fetch(`${PUBLIC_API_URL}/auth/logout`, {
             method: 'POST',
             credentials: 'include'
-        }); // path is most likley wrong 
+        });
 
         if(response.ok) {
             clearSession();

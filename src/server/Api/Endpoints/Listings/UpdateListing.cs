@@ -1,13 +1,14 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SharePrint.Api.Contracts;
 using SharePrint.Api.Endpoints._internal;
+using SharePrint.Api.Services;
 using SharePrint.Application.Abstractions;
 using SharePrint.Domain;
 using SharePrint.Infrastructure.Persistence;
 
-namespace SharePrint.Api.Endpoints.Seller;
+namespace SharePrint.Api.Endpoints.Listings;
 
 public class UpdateListing : IEndpoint
 {
@@ -144,7 +145,7 @@ public class UpdateListing : IEndpoint
                     .ToList();
                 db.ListingImages.AddRange(newRows);
             }
-            
+
             // 5. Commit DB — point of no return
             await db.SaveChangesAsync();
 

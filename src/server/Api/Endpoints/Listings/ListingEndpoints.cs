@@ -1,12 +1,13 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SharePrint.Api.Contracts;
 using SharePrint.Api.Endpoints._internal;
+using SharePrint.Api.Services;
 using SharePrint.Application.Abstractions;
 using SharePrint.Domain;
 using SharePrint.Infrastructure.Persistence;
 
-namespace SharePrint.Api.Endpoints.Seller;
+namespace SharePrint.Api.Endpoints.Listings;
 
 public class ListingEndpoints : IEndpoint
 {
@@ -115,7 +116,7 @@ public class ListingEndpoints : IEndpoint
     }
 
     internal static ListingContracts.ListingDetail ToDetail(Listing l, string sellerUsername) =>
-        new(l.Id, l.Title, l.Description, l.Price, 
+        new(l.Id, l.Title, l.Description, l.Price,
             ListingPictures.PictureUrl(l.MarketPictureKey),
             l.GalleryImages.OrderBy(g => g.Order)
                 .Select(g => new ListingContracts.DescriptionPicture(g.Id, ListingPictures.PictureUrl(g.StorageKey)))

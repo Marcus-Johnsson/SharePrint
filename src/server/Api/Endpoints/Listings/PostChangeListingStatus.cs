@@ -1,10 +1,10 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SharePrint.Api.Endpoints._internal;
 using SharePrint.Domain;
 using SharePrint.Infrastructure.Persistence;
 
-namespace SharePrint.Api.Endpoints.Market;
+namespace SharePrint.Api.Endpoints.Listings;
 
 public class PostChangeListingStatus : IEndpoint
 {

@@ -1,13 +1,12 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SharePrint.Api.Contracts;
 using SharePrint.Api.Endpoints._internal;
-using SharePrint.Api.Endpoints.Seller;
 using SharePrint.Domain;
 using SharePrint.Infrastructure.Persistence;
 
-namespace SharePrint.Api.Endpoints.Market;
+namespace SharePrint.Api.Endpoints.Listings;
 
 public class GetProductDetails : IEndpoint
 {
@@ -31,12 +30,12 @@ public class GetProductDetails : IEndpoint
 
         if (listing is null)
             return TypedResults.NotFound();
-        
+
         var user = await users.GetUserAsync(context.User);
         var isOwner = user is not null && listing.SellerId == user.Id;
         if (!isOwner && listing.Status == ListingStatus.Unlisted)
             return TypedResults.NotFound();
-        
+
         return TypedResults.Ok(ListingEndpoints.ToDetail(listing, user?.UserName ?? "unknown"));
     }
 }
