@@ -51,7 +51,19 @@
     }
 </script>
 
-<h1>Katalog</h1>
+<div class="page-size-selector">
+    <h1>Katalog</h1>
+    <label for="filter-list">Filter</label>
+    <select
+        id="filter-list"
+        bind:value={filter}
+        onchange={() => { currentPage = 1; updateURL(); }}
+        >
+        {#each filterOptions as key}
+            <option value={key}>{FILTER_LABELS[key]}</option>
+        {/each}
+    </select>
+    </div>
 
 {#if data.listings.length === 0}
     <p>Inga annonser än.</p>
@@ -75,18 +87,6 @@
         </select>
         <span>per sida</span>
     </div>
-    <div class="page-size-selector">
-        <label for="filter-list">Filter</label>
-    <select
-        id="filter-list"
-        bind:value={filter}
-        onchange={() => { currentPage = 1; updateURL(); }}
-    >
-        {#each filterOptions as key}
-            <option value={key}>{FILTER_LABELS[key]}</option>
-        {/each}
-    </select>
-    </div>
         <div class="pagination-controls">
             <button
                 onclick={() => goToPage(currentPage - 1)}
@@ -108,4 +108,13 @@
 {/if}
 <style>
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
+    .pagination-controls { display: flex; gap: 1rem; align-items: center;}
+    .pagination-info { font-weight: bold; }
+    .page-size-selector { display: flex; align-items: center; gap: 0.5rem; }
+    .page-size-selector label { font-weight: bold; }
+    .page-size-selector select { padding: 0.25rem; color: #333; }
+    .page-size-selector span { font-size: 0.9rem; color: #555; }
+    .page-size-selector h1 { margin-right: 2rem; }
+    
 </style>
