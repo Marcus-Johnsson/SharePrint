@@ -1,5 +1,6 @@
 import type { ListingSummary } from "$lib/services/listingService";
 import { PUBLIC_PRINT_SURCHARGE } from "$env/static/public";
+import { browser } from "$app/environment";
 
 export type CartOption = 'print' | 'download' | null;
 
@@ -10,6 +11,7 @@ type CartItem = {
 
 // Must match server config "Checkout:PrintSurcharge". Falls back to 0 if env missing.
 const PRINT_SURCHARGE = Number(PUBLIC_PRINT_SURCHARGE ?? 0) || 0;
+const STORAGE_KEY = 'cart:store';
 
 function defaultOption(l: ListingSummary): CartOption {
   if (l.downloadAble && !l.printAble) return 'download';
@@ -22,8 +24,30 @@ function unitPrice(item: CartItem): number {
   return item.selectedOption === 'print' ? base + PRINT_SURCHARGE : base;
 }
 
+function loadFromStorage(): CartItem[] {
+  if (!browser) return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 class Cart {
-  products = $state<CartItem[]>([]);
+  products = $state<CartItem[]>(loadFromStorage());
+
+  constructor() {
+    if (browser) {
+      $effect.root(() => {
+        $effect(() => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(this.products));
+        });
+      });
+    }
+  }
 
   /** Add a listing. No-op if already in cart (digital goods own-once semantics). */
   addListing(newListing: ListingSummary) {
@@ -63,3 +87,8 @@ class Cart {
 }
 
 export const cart = new Cart();
+
+export function clearCartStorage() {
+  cart.clear();
+  if (browser) localStorage.removeItem(STORAGE_KEY);
+}

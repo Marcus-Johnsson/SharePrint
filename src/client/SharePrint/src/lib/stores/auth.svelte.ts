@@ -1,7 +1,8 @@
 import { browser } from "$app/environment";
 import { goto } from "$app/navigation";
 import { PUBLIC_API_URL } from "$env/static/public";
-import { GetUserInformation } from "$lib/services/GetUserInformation"; 
+import { GetUserInformation } from "$lib/services/GetUserInformation";
+import { clearCartStorage } from "$lib/stores/cartStore.svelte";
 export class AuthState {
     isAuthenticated = $state<boolean | null>(null);
     Username = $state<string| null>(null);
@@ -95,6 +96,7 @@ export const logout = async () => {
         if(response.ok) {
             clearSession();
             clearStore();
+            clearCartStorage();
 
             await goto('/', { replaceState: true });
         }else {
