@@ -156,7 +156,7 @@ public class UpdateListing : IEndpoint
                 try { await pictureStorage.DeleteAsync(k); } catch { /* orphan */ }
 
             await db.Entry(listing).Collection(l => l.GalleryImages).LoadAsync();
-            return TypedResults.Ok(ListingEndpoints.ToDetail(listing, user.UserName ?? "Unknown"));
+            return TypedResults.Ok(PostCreateListing.ToDetail(listing, user.UserName ?? "Unknown"));
         }
         catch
         {
