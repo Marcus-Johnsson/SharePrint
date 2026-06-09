@@ -59,11 +59,12 @@ export type ListingPage = {
     totalPages: number;
     hasNextPage: boolean;
     hasPreviousPage: boolean;
+    filter: string;
 };
 
 export const listingService = {
-    catalog: (page: number, pageSize: number) =>
-    api.get<ListingPage>(`listings/${page}/${pageSize}`),
+    catalog: (page: number, pageSize: number, filter: string) =>
+    api.get<ListingPage>(`listings/${page}/${pageSize}/${filter}`),
 
     userCatalog: (page: number, pageSize: number) =>
     api.get<ListingPage>(`listings/user/${page}/${pageSize}`),
@@ -89,4 +90,7 @@ export const listingService = {
 
     status: (id: string, status: 'Active' | 'Unlisted') =>
         api.post<unknown, { status: string }>(`listings/${id}/status`, { status }),
+    
+    delete: (id: string) =>
+        api.delete<unknown>(`listings/${id}`)
 };

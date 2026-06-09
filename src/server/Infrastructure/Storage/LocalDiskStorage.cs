@@ -34,7 +34,7 @@ public class LocalDiskStorage : IFileStorage
 
     public Task DeleteAsync(string storageKey, CancellationToken ct = default)
     {
-        File.Delete(Path.Combine(_metaDir, storageKey));
+        File.Delete(Path.Combine(_root, storageKey));
         File.Delete(Path.Combine(_metaDir, storageKey));
         return Task.CompletedTask;
     }

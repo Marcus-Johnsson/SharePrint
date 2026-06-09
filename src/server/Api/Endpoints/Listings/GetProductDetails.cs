@@ -36,6 +36,6 @@ public class GetProductDetails : IEndpoint
         if (!isOwner && listing.Status == ListingStatus.Unlisted)
             return TypedResults.NotFound();
 
-        return TypedResults.Ok(ListingEndpoints.ToDetail(listing, user?.UserName ?? "unknown"));
+        return TypedResults.Ok(PostCreateListing.ToDetail(listing, user?.UserName ?? "unknown"));
     }
 }

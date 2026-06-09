@@ -10,7 +10,7 @@ using SharePrint.Infrastructure.Persistence;
 
 namespace SharePrint.Api.Endpoints.Listings;
 
-public class UpdateListing : IEndpoint
+public class PutUpdateListing : IEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {

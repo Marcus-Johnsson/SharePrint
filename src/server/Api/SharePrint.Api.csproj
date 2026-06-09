@@ -16,10 +16,6 @@
     <ProjectReference Include="..\Domain\SharePrint.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Endpoints\Listing\" />
-  </ItemGroup>
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>

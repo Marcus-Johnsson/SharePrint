@@ -27,7 +27,7 @@ let printAble = $state(false);
 let createdAt = $state('');
 let lastUpdate = $state('');
 let status = $state< 'Active' | 'Unlisted' | 'New'>('New'); // idea is New is only when creating, hence we can hide field when creating
-
+let actionState = $state< 'delete' | 'loading' | ''>('');
 let thumbnailUrl = $state<string | null>(null);
 let thumbnailFile = $state<File | null>(null);
 let thumbnailPreview = $derived(
@@ -38,7 +38,7 @@ let file = $state<File | null>(null);
 
 let gallery = $state<GalleryItem[]>([]);
 
-let saving = $state(false);
+let loading = $state(false);
 
 const MAX_WORDS = 30;
 const MAX_CHARS = 200;
@@ -104,9 +104,24 @@ function removeGalleryAt(index: number) {
     gallery = gallery.filter((_, i) => i !== index);
 }
 
+async function deleteListing() {
+    if (!listingId) return;
+    loading = true;
+    actionState = 'delete';
+    try {
+        await listingService.delete(listingId);
+        onSaved?.(null);
+    } catch (err) {
+        console.error('Delete failed:', err);
+    } finally {
+        loading = false;
+        actionState = '';
+    }
+}
+
 async function submit() {
-    if (saving) return;
-    saving = true;
+    if (loading) return;
+    loading = true;
     try {
         if (isEdit) {
             await submitEdit(listingId!);
@@ -116,7 +131,7 @@ async function submit() {
     } catch (err) {
         console.error('Submit failed:', err);
     } finally {
-        saving = false;
+        loading = false;
     }
 }
 
@@ -266,10 +281,16 @@ let previewListing = $derived({
                 </select>
             </label>
         {/if}
-
-        <button type="submit" class="primary" disabled={saving}>
-            {saving ? 'Sparar…' : isEdit ? 'Spara' : 'Publicera'}
-        </button>
+        <div>
+            <button type="submit" class="primary" disabled={loading}>
+                {loading ? 'Sparar…' : isEdit ? 'Spara' : 'Publicera'}
+            </button>
+            {#if isEdit}
+                <button type="button" class="primary" disabled={loading} onclick={deleteListing}>
+                    {actionState == 'delete' ? 'Tar bort...' : 'Ta bort'}
+                </button>
+            {/if}
+        </div>
     </form>
 
     <div class="preview-grid">

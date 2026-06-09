@@ -13,7 +13,7 @@ public class GetCatalog : IEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/listings/{page}/{pageSize}", Handler)
+        app.MapGet("/api/listings/{page}/{pageSize}/{filter}", Handler)
             .WithName("GetCatalog")
             .Produces<IReadOnlyList<ListingContracts.ListingSummary>>(StatusCodes.Status200OK);
     }
@@ -24,28 +24,39 @@ public class GetCatalog : IEndpoint
         int TotalCount,
         int TotalPages,
         bool HasNextPage,
-        bool HasPreviousPage);
+        bool HasPreviousPage,
+        ListingFilter HasFilter);
 
+    public enum ListingFilter { Inget, Utskrvining, Nedladdning }
+    
     private static async Task<IResult> Handler(
         SharePrintDbContext db,
         UserManager<User> users,
         [FromRoute] int page = 1,
-        [FromRoute] int pageSize = 20)
+        [FromRoute] int pageSize = 20,
+        [FromRoute] ListingFilter filter = ListingFilter.Inget)
     {
         if (page < 1) page = 1;
         if (pageSize is < 1 or > 100) pageSize = 20;
 
-        var listingCount = db.Listings.Where(l => l.Status == ListingStatus.Active);
-        var totalCount = await listingCount.CountAsync();
+        var q = db.Listings.Where(l => l.Status == ListingStatus.Active);
+
+        q = filter switch
+        {
+            ListingFilter.Utskrvining => q.Where(l => l.PrintAble),
+            ListingFilter.Nedladdning    => q.Where(l => l.DownloadAble),
+            _                      => q
+        };
+
+        var totalCount = await q.CountAsync();
         var totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
 
-        var items = await db.Listings
-            .Where(l => l.Status == ListingStatus.Active)
+        var items = await q
             .OrderByDescending(l => l.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
-
+        
         var result = new List<ListingContracts.ListingSummary>(items.Count);
         foreach (var listing in items)
         {
@@ -63,6 +74,6 @@ public class GetCatalog : IEndpoint
 
         return TypedResults.Ok(new ListingPage(
             result, page, pageSize, totalCount, totalPages,
-            page < totalPages, page > 1));
+            page < totalPages, page > 1, filter));
     }
 }

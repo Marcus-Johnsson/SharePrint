@@ -8,7 +8,11 @@
 
     let currentPage = $state(1);
 	let pageSize = $state(5);
-    
+
+    type Filter = 'Inget filter' | 'Utskrvining' | 'Nedladdning';
+    const filterOptions: Filter[] = ['Inget filter', 'Utskrvining', 'Nedladdning'];
+    let filters = $state<Filter>("Inget filter");
+
     let search = $state('');
 	const pageSizeOptions = [5, 30, 40];
 	let totalPages = $derived(data.totalPages || 1);
@@ -25,8 +29,9 @@
 		if (search) params.set('search', search);
 
 		if (pageSize !== 5) params.set('pageSize', String(pageSize));
-
+        if (filters !== 'Inget filter') params.set('filters', filters);
 		if (currentPage > 1) params.set('page', String(currentPage));
+
 		const url = params.toString() ? `/market?${params.toString()}` : '/market';
 		goto(url, { replaceState: true, keepFocus: true, noScroll: true });
 	}
@@ -67,6 +72,18 @@
             {/each}
         </select>
         <span>per sida</span>
+    </div>
+    <div class="page-size-selector">
+        <label for="pageSize-list">Filter</label>
+        <select
+            id="pageSize-list"
+            bind:value={filters}
+            onchange={() => {currentPage = 1; updateURL();}}
+        >
+            {#each filterOptions as filter}
+                <option value={filter}>{filter}</option>
+            {/each}
+        </select>
     </div>
         <div class="pagination-controls">
             <button

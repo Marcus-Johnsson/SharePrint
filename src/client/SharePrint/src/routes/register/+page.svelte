@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { register } from '$lib/services/auth.svelte';
+  import { register } from '$lib/stores/auth.svelte';
 
   let email = $state('');
   let username = $state('');

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { login } from '$lib/services/auth.svelte';
+  import { login } from '$lib/stores/auth.svelte';
 
   // prefill for easier testing, remove in production #WhatCouldGoWrong
   let email = $state('test@test.com');

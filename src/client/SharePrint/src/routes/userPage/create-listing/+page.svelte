@@ -1,7 +1,7 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
 import ListingDetail from '$lib/components/ListingDetail.svelte';
-import { isSeller } from '$lib/services/auth.svelte';
+import { isSeller } from '$lib/stores/auth.svelte';
 
 let isSellerRole = $derived(isSeller());
 

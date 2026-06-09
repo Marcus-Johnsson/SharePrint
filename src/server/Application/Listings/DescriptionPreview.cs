@@ -2,7 +2,7 @@ namespace SharePrint.Application.Listings;
 
 public static class DescriptionPreview
 {
-    public static string From(string description, int maxWords = 50, int maxChars = 200)
+    public static string From(string description, int maxWords = 30, int maxChars = 200)
     {
         if (string.IsNullOrWhiteSpace(description)) return "";
 

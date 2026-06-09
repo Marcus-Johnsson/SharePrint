@@ -9,7 +9,7 @@ using SharePrint.Infrastructure.Persistence;
 
 namespace SharePrint.Api.Endpoints.Listings;
 
-public class ListingEndpoints : IEndpoint
+public class PostCreateListing : IEndpoint
 {
     public static void MapEndpoint(IEndpointRouteBuilder app)
     {
