@@ -12,10 +12,12 @@
   <dd>{auth.Username ?? '—'}</dd>
   <dt>E-post</dt>
   <dd>{auth.Email ?? '—'}</dd>
-  <dt>Verifierad användare</dt>
-  <dd>{sellerRole ?? '—'} 
+  <dt>Användare status</dt>
+  <dd>
     {#if sellerRole === false}
       <button class="verified" onclick={() => ui.showVerifyPopup = true}>verifiera</button>
+    {:else}
+      <span class="verified">verifierad</span>
     {/if}
     </dd>
 </dl>
