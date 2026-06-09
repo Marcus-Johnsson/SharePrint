@@ -25,26 +25,26 @@ public class GetCatalog : IEndpoint
         int TotalPages,
         bool HasNextPage,
         bool HasPreviousPage,
-        ListingFilter HasFilter);
+        ListingFilter Filter);
 
-    public enum ListingFilter { Inget, Utskrvining, Nedladdning }
+    public enum ListingFilter { None, Withdrawal, Download }
     
     private static async Task<IResult> Handler(
         SharePrintDbContext db,
         UserManager<User> users,
         [FromRoute] int page = 1,
-        [FromRoute] int pageSize = 20,
-        [FromRoute] ListingFilter filter = ListingFilter.Inget)
+        [FromRoute] int pageSize = 5,
+        [FromRoute] ListingFilter filter = ListingFilter.None)
     {
-        if (page < 1) page = 1;
-        if (pageSize is < 1 or > 100) pageSize = 20;
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
 
         var q = db.Listings.Where(l => l.Status == ListingStatus.Active);
 
         q = filter switch
         {
-            ListingFilter.Utskrvining => q.Where(l => l.PrintAble),
-            ListingFilter.Nedladdning    => q.Where(l => l.DownloadAble),
+            ListingFilter.Withdrawal => q.Where(l => l.PrintAble),
+            ListingFilter.Download    => q.Where(l => l.DownloadAble),
             _                      => q
         };
 
@@ -56,21 +56,21 @@ public class GetCatalog : IEndpoint
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
-        
-        var result = new List<ListingContracts.ListingSummary>(items.Count);
-        foreach (var listing in items)
-        {
-            var seller = await users.FindByIdAsync(listing.SellerId);
-            result.Add(new ListingContracts.ListingSummary(
-                listing.Id,
-                listing.Title,
-                DescriptionPreview.From(listing.Description),
-                listing.Price,
-                $"/api/pictures/{listing.MarketPictureKey}",
-                seller?.UserName ?? "unknown",
-                listing.DownloadAble,
-                listing.PrintAble));
-        }
+
+        var sellerIds = items.Select(i => i.SellerId).Distinct().ToList();
+        var sellers = await users.Users
+            .Where(u => sellerIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.UserName ?? "unknown");
+
+        var result = items.Select(listing => new ListingContracts.ListingSummary(
+            listing.Id,
+            listing.Title,
+            DescriptionPreview.From(listing.Description),
+            listing.Price,
+            $"/api/pictures/{listing.MarketPictureKey}",
+            sellers.GetValueOrDefault(listing.SellerId, "unknown"),
+            listing.DownloadAble,
+            listing.PrintAble)).ToList();
 
         return TypedResults.Ok(new ListingPage(
             result, page, pageSize, totalCount, totalPages,

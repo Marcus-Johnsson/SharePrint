@@ -2,51 +2,53 @@
     import { goto } from '$app/navigation';
     import { navigating } from '$app/state';
     import ListingCard from '$lib/components/ListingCard.svelte';
-    import { onMount } from 'svelte';
-    
+
     let { data } = $props();
 
-    let currentPage = $state(1);
-	let pageSize = $state(5);
+    const FILTER_LABELS = {
+        None:       'Inget filter',
+        Withdrawal: 'Utskrivning',
+        Download:   'Nedladdning',
+    } as const;
+    type Filter = keyof typeof FILTER_LABELS;
+    const filterOptions = Object.keys(FILTER_LABELS) as Filter[];
+    const pageSizeOptions = [5, 30, 40];
 
-    type Filter = 'Inget filter' | 'Utskrvining' | 'Nedladdning';
-    const filterOptions: Filter[] = ['Inget filter', 'Utskrvining', 'Nedladdning'];
-    let filters = $state<Filter>("Inget filter");
+    let currentPage = $state(data.page);
+    let pageSize = $state(data.pageSize);
+    let filter = $state<Filter>(data.filter as Filter);
 
-    let search = $state('');
-	const pageSizeOptions = [5, 30, 40];
-	let totalPages = $derived(data.totalPages || 1);
-	let totalCount = $derived(data.totalCount || 0);
-	let hasNextPage = $derived(data.hasNextPage || false);
-	let hasPreviousPage = $derived(data.hasPreviousPage || false);
+    $effect(() => {
+        currentPage = data.page;
+        pageSize = data.pageSize;
+        filter = data.filter as Filter;
+    });
 
+    let totalPages = $derived(data.totalPages);
+    let hasNextPage = $derived(data.hasNextPage);
+    let hasPreviousPage = $derived(data.hasPreviousPage);
     let isRefreshing = $derived(navigating.to !== null);
-    
-    onMount(() => {updateURL();});
 
     function updateURL() {
-		const params = new URLSearchParams();
-		if (search) params.set('search', search);
+        const params = new URLSearchParams();
+        if (pageSize !== 5) params.set('pageSize', String(pageSize));
+        if (filter !== 'None') params.set('filters', filter);
+        if (currentPage > 1) params.set('page', String(currentPage));
 
-		if (pageSize !== 5) params.set('pageSize', String(pageSize));
-        if (filters !== 'Inget filter') params.set('filters', filters);
-		if (currentPage > 1) params.set('page', String(currentPage));
+        const url = params.toString() ? `/market?${params.toString()}` : '/market';
+        goto(url, { replaceState: true, keepFocus: true, noScroll: true });
+    }
 
-		const url = params.toString() ? `/market?${params.toString()}` : '/market';
-		goto(url, { replaceState: true, keepFocus: true, noScroll: true });
-	}
-
-	function goToPage(page: number) {
-		currentPage = page;
-		updateURL();
-	}
-
-    function changePageSize(size: number) {
-        pageSize = size;
-        currentPage = 1; 
+    function goToPage(page: number) {
+        currentPage = page;
         updateURL();
     }
 
+    function changePageSize(size: number) {
+        pageSize = size;
+        currentPage = 1;
+        updateURL();
+    }
 </script>
 
 <h1>Katalog</h1>
@@ -74,16 +76,16 @@
         <span>per sida</span>
     </div>
     <div class="page-size-selector">
-        <label for="pageSize-list">Filter</label>
-        <select
-            id="pageSize-list"
-            bind:value={filters}
-            onchange={() => {currentPage = 1; updateURL();}}
-        >
-            {#each filterOptions as filter}
-                <option value={filter}>{filter}</option>
-            {/each}
-        </select>
+        <label for="filter-list">Filter</label>
+    <select
+        id="filter-list"
+        bind:value={filter}
+        onchange={() => { currentPage = 1; updateURL(); }}
+    >
+        {#each filterOptions as key}
+            <option value={key}>{FILTER_LABELS[key]}</option>
+        {/each}
+    </select>
     </div>
         <div class="pagination-controls">
             <button
