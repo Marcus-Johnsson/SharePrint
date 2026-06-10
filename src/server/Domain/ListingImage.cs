@@ -13,7 +13,5 @@ public class ListingImage
     [StringLength(500)]
     public string StorageKey { get; set; } = "";
 
-    public int Order { get; set; }
-
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }

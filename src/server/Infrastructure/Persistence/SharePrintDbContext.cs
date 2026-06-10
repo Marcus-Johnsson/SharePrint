@@ -33,6 +33,6 @@ public class SharePrintDbContext : IdentityDbContext<User>
             .HasForeignKey(i => i.ListingId)
             .OnDelete(DeleteBehavior.Cascade);
         b.Entity<ListingImage>()
-            .HasIndex(i => new { i.ListingId, i.Order });
+            .HasIndex(i => new { i.ListingId, i.CreatedAt });
     }
 }

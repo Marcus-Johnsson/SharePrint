@@ -96,7 +96,7 @@ public class PostCreateListing : IEndpoint
                 DownloadAble     = req.DownloadAble,
                 PrintAble        = req.PrintAble,
                 GalleryImages    = savedGalleryKeys
-                    .Select((k, i) => new ListingImage { StorageKey = k, Order = i })
+                    .Select(k => new ListingImage { StorageKey = k })
                     .ToList()
             };
 
@@ -118,7 +118,7 @@ public class PostCreateListing : IEndpoint
     internal static ListingContracts.ListingDetail ToDetail(Listing l, string sellerUsername) =>
         new(l.Id, l.Title, l.Description, l.Price,
             ListingPictures.PictureUrl(l.MarketPictureKey),
-            l.GalleryImages.OrderBy(g => g.Order)
+            l.GalleryImages.OrderBy(g => g.CreatedAt)
                 .Select(g => new ListingContracts.DescriptionPicture(g.Id, ListingPictures.PictureUrl(g.StorageKey)))
                 .ToList(),
             sellerUsername, l.Status.ToString(), l.DownloadAble, l.PrintAble, l.CreatedAt.DateTime.ToString(), l.LastUpdatedAt.DateTime.ToString());
