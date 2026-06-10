@@ -133,7 +133,7 @@ export const login = async (payload: {email: string, password: string} ) => {
                 Roles: me.roles,
             });
 
-            await goto('/', { replaceState: true });
+            await goto('/market', { replaceState: true });
         } else {
             console.error('Login failed');
         }
