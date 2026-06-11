@@ -4,14 +4,8 @@ public static class PictureValidator
 {
     public const long DefaultMaxBytes = 5 * 1024 * 1024; // 5 MB
 
-    public static bool IsAllowedImage(ReadOnlySpan<byte> header, string contentType, long maxBytes, out string error)
+    public static bool IsAllowedImage(ReadOnlySpan<byte> header, string contentType, out string error)
     {
-        if (header.Length > maxBytes)
-        {
-            error = "size_exceeded";
-            return false;
-        }
-
         switch (contentType?.ToLowerInvariant())
         {
             case "image/jpeg":

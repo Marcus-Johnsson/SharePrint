@@ -15,7 +15,6 @@ internal static class ListingPictures
         return PictureValidator.IsAllowedImage(
             buffer.AsSpan(0, read),
             file.ContentType,
-            PictureValidator.DefaultMaxBytes,
             out _);
     }
 }

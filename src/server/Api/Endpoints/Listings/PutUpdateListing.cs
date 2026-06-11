@@ -85,7 +85,6 @@ public class PutUpdateListing : IEndpoint
         var removedKeys = toRemove.Select(g => g.StorageKey).ToList();
         var oldThumbKey = listing.MarketPictureKey;
 
-        var newKeys = new List<string>();
         string? newThumbKey = null;
         var newGalleryKeys = new List<string>();
 
@@ -95,13 +94,11 @@ public class PutUpdateListing : IEndpoint
             {
                 await using var s = req.Thumbnail!.OpenReadStream();
                 newThumbKey = await pictureStorage.SaveAsync(s, req.Thumbnail.ContentType);
-                newKeys.Add(newThumbKey);
             }
             foreach (var img in newGalleryFiles)
             {
                 await using var s = img.OpenReadStream();
                 var key = await pictureStorage.SaveAsync(s, img.ContentType);
-                newKeys.Add(key);
                 newGalleryKeys.Add(key);
             }
 
@@ -132,6 +129,7 @@ public class PutUpdateListing : IEndpoint
 
             if (replaceThumb && !string.IsNullOrEmpty(oldThumbKey))
                 try { await pictureStorage.DeleteAsync(oldThumbKey); } catch { /* logg orphan */ }
+            
             foreach (var k in removedKeys)
                 try { await pictureStorage.DeleteAsync(k); } catch { /* logg orphan  */ }
 
@@ -140,7 +138,9 @@ public class PutUpdateListing : IEndpoint
         }
         catch
         {
-            foreach (var k in newKeys)
+            var toDelete = newGalleryKeys.ToList();
+            if (newThumbKey != null) toDelete.Add(newThumbKey);
+            foreach (var k in newGalleryKeys)
                 try { await pictureStorage.DeleteAsync(k); } catch {/* logg orphan */}
             throw;
         }
