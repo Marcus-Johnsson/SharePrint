@@ -173,7 +173,7 @@ async function submitEdit(id: string) {
         downloadAble,
         printAble,
         thumbnail: thumbnailFile ?? undefined,
-        keptGalleryIds,r
+        keptGalleryIds,
         newGalleryImages,
     });
     
